@@ -67,7 +67,7 @@ graph TD;
         Repository["@Repository
         Repositories"]
         Model["Models"]
-        DB[("🗄️ Data Base 
+        DB[("🗄️🐋 Data Base 
         (MariaDB)")]
     end
 
@@ -109,7 +109,7 @@ graph TD;
     end
 
     subgraph BASE DE DATOS
-        DB[("🗄️ Base de Datos (MariaDB)")]
+        DB[("🗄️🐋 Base de Datos (MariaDB)")]
     end
 
     %% Flujo del proceso de autenticación
