@@ -1,2 +1,2 @@
-# HotelManagementAPI
+# HotelManagementAPI - Ejercicio de DeHaroHub
 API RESTful para la gestión de un hotel, permitiendo administrar reservas, habitaciones, pagos, clientes y administradores, con autenticación, validaciones y documentación en ....
