@@ -149,7 +149,7 @@ graph TD;
 
     subgraph REPOSITORIO
         User["🧑‍💼 Administrator{}🔸Implementa UserDetails"]
-        DB[("🗄️ Base de Datos")]
+        DB[("🗄️🐋 Base de Datos")]
     end
 
     subgraph SecurityContext
