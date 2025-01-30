@@ -16,9 +16,9 @@ erDiagram
     Room {
         INT id PK
         INT room_number
-        VARCHAR room_type
+        ENUM room_type "SINGLE, DOUBLE, SUITE"
         DECIMAL price_per_night
-        VARCHAR state
+        ENUM state "AVAILABLE, OCCUPIED, MAINTENANCE"
     }
 
     Reservation {
@@ -27,7 +27,7 @@ erDiagram
         INT room_id FK
         DATE start_date
         DATE end_date
-        VARCHAR status
+        ENUM status "PENDING, CONFIRMED, CANCELED"
     }
 
     Payment {
@@ -35,7 +35,7 @@ erDiagram
         INT reservation_id FK
         DECIMAL amount
         DATE payment_date
-        VARCHAR payment_method
+        ENUM payment_method "CARD, CASH, TRANSFER"
     }
 
     Administrator {
@@ -43,7 +43,7 @@ erDiagram
         VARCHAR name
         VARCHAR email
         VARCHAR password
-        VARCHAR role
+        ENUM role "ADMIN, SUPERADMIN"
     }
 
     Client ||--o{ Reservation : has
