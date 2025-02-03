@@ -5,7 +5,6 @@ API RESTful para la gestión de un hotel, permitiendo administrar reservas, habi
 
 ```mermaid
 erDiagram
-    erDiagram
     User {
         INT id PK
         VARCHAR email
