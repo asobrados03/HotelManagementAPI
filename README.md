@@ -5,12 +5,26 @@ API RESTful para la gestión de un hotel, permitiendo administrar reservas, habi
 
 ```mermaid
 erDiagram
+    erDiagram
+    User {
+        INT id PK
+        VARCHAR email
+        VARCHAR password
+        ENUM role "CLIENT, ADMIN, SUPERADMIN"
+    }
+
     Client {
         INT id PK
+        INT user_id FK
         VARCHAR first_name
         VARCHAR last_name
-        VARCHAR email
         VARCHAR phone
+    }
+
+    Administrator {
+        INT id PK
+        INT user_id FK
+        VARCHAR name
     }
 
     Room {
@@ -38,17 +52,11 @@ erDiagram
         ENUM payment_method "CARD, CASH, TRANSFER"
     }
 
-    Administrator {
-        INT id PK
-        VARCHAR name
-        VARCHAR email
-        VARCHAR password
-        ENUM role "ADMIN, SUPERADMIN"
-    }
-
     Client ||--o{ Reservation : has
     Room ||--o{ Reservation : "is booked in"
     Reservation ||--o{ Payment : has
+    User ||--|| Client : "is a"
+    User ||--|| Administrator : "is a"
 ```
 
 ## Esquema general de la arquitectura de la API RESTful
