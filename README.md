@@ -106,8 +106,8 @@ graph TD;
     end
 
     subgraph REPOSITORIO
-        UserRepo["📂AdminRepository{} 🔸Guarda/Obtiene UserDetail"]
-        User["🧑‍💼 Administrator{}
+        UserRepo["📂UserRepository{} 🔸Guarda/Obtiene UserDetail"]
+        User["🧑‍💼 User{}
         🔸Implementa UserDetails"]
     end
 
@@ -155,7 +155,7 @@ graph TD;
     end
 
     subgraph REPOSITORIO
-        User["🧑‍💼 Administrator{}🔸Implementa UserDetails"]
+        User["🧑‍💼 User{}🔸Implementa UserDetails"]
         DB[("🗄️🐋 Base de Datos")]
     end
 
