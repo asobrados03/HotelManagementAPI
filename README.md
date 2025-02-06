@@ -31,7 +31,7 @@ erDiagram
         INT room_number
         ENUM room_type "SINGLE, DOUBLE, SUITE"
         DECIMAL price_per_night
-        ENUM state "AVAILABLE, OCCUPIED, MAINTENANCE"
+        ENUM status "AVAILABLE, OCCUPIED, MAINTENANCE"
     }
 
     Reservation {
