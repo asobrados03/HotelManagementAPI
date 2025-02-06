@@ -38,6 +38,7 @@ erDiagram
         INT id PK
         INT client_id FK
         INT room_id FK
+        DECIMAL total_price
         DATE start_date
         DATE end_date
         ENUM status "PENDING, CONFIRMED, CANCELED"
