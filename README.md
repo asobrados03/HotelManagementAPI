@@ -55,7 +55,7 @@ El objetivo de este proyecto es crear una API para la gestión de un hotel que p
 - **Campos obligatorios**: ID, Nombre, Correo electrónico, Contraseña (hasheada), Rol (admin, superadmin).
 
 ### Autenticación y Autorización
-- Implementación de autenticación JWT para administradores.
+- Implementación de autenticación JWT para administradores y clientes.
 - Solo los administradores pueden crear, actualizar o eliminar habitaciones y reservas.
 - Los clientes pueden crear y ver sus reservas, pero no modificarlas una vez confirmadas.
 
