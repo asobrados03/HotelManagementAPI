@@ -63,28 +63,42 @@ erDiagram
 
 ```mermaid
 graph TD;
-    subgraph APP_CLIENT
-        Client["💻 Cliente (Front-end)"]
-    end
+  subgraph CLIENTE
+    Client["💻 Cliente (Front-end)"]
+  end
 
-    subgraph API_REST
-        Controller["@RestController
-        Controllers"]
-        Service["@Service
-        Services"]
-        Repository["@Repository
-        Repositories"]
-        Model["Models"]
-        DB[("🗄️🐋 Data Base 
-        (MariaDB)")]
-    end
+  subgraph ADAPTADORES
+    Controller["@RestController Controladores Web"]
+    DTOs["DTOs 
+    (Request/Response)"]
+    Security["Filtros y JWT 
+    (Adaptador de Seguridad)"]
+  end
 
-    Client -- "HTTP Request" --> Controller
-    Controller --> Service
-    Service --> Repository
-    Repository --> Model
-    Repository --> DB
-    Controller -- "HTTP Response" --> Client
+  subgraph APLICACIÓN
+    UseCase["Casos de Uso 
+    (Lógica de Negocio)"]
+  end
+
+  subgraph DOMINIO
+    Entities["Entidades de Dominio (Modelos)"]
+    Ports["Interfaces de Repositorios (Puertos)"]
+  end
+
+  subgraph INFRAESTRUCTURA
+    RepoImpl["@Repository Implementación de Repositorios con JDBC"]
+    DB["🗄️🐋 Base de Datos (MariaDB)"]
+  end
+
+  Client -- "HTTP Request" --> Controller
+  Controller -- "DTO Mapping" --> UseCase
+  UseCase -- "Invoca reglas de negocio" --> Entities
+  UseCase -- "Solicita persistencia" --> Ports
+  Ports -- "Implementado por" --> RepoImpl
+  RepoImpl -- "Acceso a datos" --> DB
+  Controller -- "HTTP Response" --> Client
+  %% Opcional: Integración de seguridad
+  Controller -- "Autenticación/Autorización" --> Security
 ```
 
 ## Esquema del Proceso de Autenticación/Registro basado en JWT (JSON Web Tokens)
