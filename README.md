@@ -145,7 +145,7 @@ El proyecto está organizado siguiendo una arquitectura limpia:
   - Implementaciones de repositorios (por ejemplo, con JDBC).
   - Configuración de acceso a la base de datos (MariaDB en Docker).
 
-### Esquema general de la arquitectura de la API RESTful
+### Esquema general de la arquitectura
 
 ```mermaid
 graph TD;
