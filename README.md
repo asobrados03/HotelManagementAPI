@@ -30,7 +30,7 @@ El objetivo de este proyecto es crear una API para la gestión de un hotel que p
 
 - Manejar reservas, habitaciones, pagos, clientes y administradores.
 - Implementar la lógica de negocio, estructuras de datos y endpoints necesarios.
-- Mejorar las habilidades en la creación de APIs RESTful, manejo de bases de datos y aplicación de buenas prácticas en arquitectura de software.
+- Aprender las habilidades en la creación de APIs RESTful, mejorar el manejo de bases de datos y aplicación de buenas prácticas en arquitectura de software.
 
 ## Características Funcionales
 
