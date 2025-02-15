@@ -145,8 +145,12 @@ El proyecto está organizado siguiendo una arquitectura limpia:
 - **Infraestructura**:  
   - Implementaciones de repositorios (por ejemplo, con JDBC).
   - Configuración de acceso a la base de datos (MariaDB en Docker).
+ 
+### Diagrama hexagonal de la arquitectura general y limpia de la API
 
-### Esquema general de la arquitectura
+[Arquitectura hexagonal de la API](resources/Arquitectura-hexagonal-API-Gestión-Hotel.png)
+
+### Diagrama de flujo general de la arquitectura
 
 ```mermaid
 graph TD;
