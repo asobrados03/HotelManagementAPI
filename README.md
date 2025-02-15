@@ -358,11 +358,6 @@ docker-compose up -d
 
 2. Compila y ejecuta la aplicación:
    ```bash
-   ./mvnw clean install
-   ./mvnw spring-boot:run
-   ```
-   O, si usas Gradle:
-   ```bash
    ./gradlew build
    ./gradlew bootRun
    ```
@@ -379,10 +374,6 @@ La documentación interactiva se genera automáticamente con Swagger. Una vez in
 
 Se han implementado pruebas unitarias y de integración para asegurar el correcto funcionamiento de la API. Para ejecutarlas:
 
-```bash
-./mvnw test
-```
-o
 ```bash
 ./gradlew test
 ```
