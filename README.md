@@ -349,7 +349,7 @@ docker-compose up -d
 1. Clona el repositorio:
    ```bash
    git clone https://github.com/asobrados03/HotelManagementAPI.git
-   cd nombre-del-repo
+   cd HotelManagementAPI
    ```
 
 2. Compila y ejecuta la aplicación:
