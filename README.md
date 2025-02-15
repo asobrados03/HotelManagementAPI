@@ -1,6 +1,6 @@
 # HotelManagementAPI - Ejercicio de DeHaroHub
 ¡Hola y bienvenido!
-Este desarrollo se trata de un ejercicio propuesto en la comunidad de Skool DeHaroHub por Nacho De Haro (el creador de la comunidad) en [este repositorio](https://github.com/Deharotech/DHHotel). En el propio enunciado pone que se debe realizar una PR en ese mismo repositorio para que él lo vea. Pero como la comunidad esta inactiva y su creador esta a otras cosas he optado por publicar mi desarrollo en este repositorio.
+Este desarrollo se trata de un ejercicio propuesto en la comunidad de Skool DeHaroHub por Nacho De Haro (el creador de la comunidad) en [este repositorio](https://github.com/Deharotech/DHHotel). En el propio enunciado pone que se debe realizar una PR en ese mismo repositorio para que toda la gente de la comunidad pueda revisarlo, aprender de él y aportar su granito de arena. Pero como la comunidad esta inactiva y su creador esta a otras cosas he optado por publicar mi desarrollo en este repositorio.
 
 ## Índice
 
