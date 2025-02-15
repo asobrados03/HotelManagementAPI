@@ -148,7 +148,7 @@ El proyecto está organizado siguiendo una arquitectura limpia:
  
 ### Diagrama hexagonal de la arquitectura general y limpia de la API
 
-[Arquitectura hexagonal de la API](resources/Arquitectura-hexagonal-API-Gestión-Hotel.png)
+![Arquitectura hexagonal de la API](resources/Arquitectura-hexagonal-API-Gestión-Hotel.png)
 
 ### Diagrama de flujo general de la arquitectura
 
