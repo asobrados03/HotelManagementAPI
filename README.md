@@ -66,7 +66,7 @@ El objetivo de este proyecto es crear una API para la gestión de un hotel que p
 - **ORM**: No he usado ningún ORM en su lugar he usado JDBC de manera directa ya que es más flexible.
 - **Contenedores**: Docker para MariaDB y Adminer.
 - **Documentación**: Swagger/OpenAPI para la documentación de la API.
-- **Pruebas**: Pruebas unitarias e integración.
+- **Pruebas**: Pruebas unitarias y de integración.
 
 ## Diagrama Entidad-Relación de la Base de Datos de la API
 
@@ -348,7 +348,7 @@ docker-compose up -d
 
 1. Clona el repositorio:
    ```bash
-   git clone https://tu-repo-url.git
+   git clone https://github.com/asobrados03/HotelManagementAPI.git
    cd nombre-del-repo
    ```
 
