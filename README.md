@@ -143,7 +143,7 @@ El proyecto está organizado siguiendo una arquitectura limpia:
   - Interfaces de repositorios (Puertos).
 
 - **Infraestructura**:  
-  - Implementaciones de repositorios (por ejemplo, con JDBC).
+  - Implementaciones de repositorios (con JDBC).
   - Configuración de acceso a la base de datos (MariaDB en Docker).
  
 ### Diagrama hexagonal de la arquitectura general y limpia de la API
