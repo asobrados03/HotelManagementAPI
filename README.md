@@ -172,7 +172,7 @@ graph TD;
   end
 
   subgraph DOMINIO
-    Entities[🗃️ Entidades de Dominio (Modelos)"]
+    Entities["🗃️ Entidades de Dominio (Modelos)"]
     Ports["📁 Interfaces de Repositorios (Puertos)"]
   end
 
