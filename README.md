@@ -159,25 +159,25 @@ graph TD;
   end
 
   subgraph ADAPTADORES
-    Controller["@RestController Controladores Web"]
-    DTOs["DTOs 
+    Controller["🌐 @RestController Controladores Web"]
+    DTOs["🔌 DTOs 
     (Request/Response)"]
-    Security["Filtros y JWT 
+    Security["🔐 Filtros y JWT 
     (Adaptador de Seguridad)"]
   end
 
   subgraph APLICACIÓN
-    UseCase["Casos de Uso 
+    UseCase["⚙️ Casos de Uso 
     (Lógica de Negocio)"]
   end
 
   subgraph DOMINIO
-    Entities["Entidades de Dominio (Modelos)"]
-    Ports["Interfaces de Repositorios (Puertos)"]
+    Entities[🗃️ Entidades de Dominio (Modelos)"]
+    Ports["📁 Interfaces de Repositorios (Puertos)"]
   end
 
   subgraph INFRAESTRUCTURA
-    RepoImpl["@Repository Implementación de Repositorios con JDBC"]
+    RepoImpl["📂 @Repository Implementación de Repositorios con JDBC"]
     DB["🗄️🐋 Base de Datos (MariaDB)"]
   end
 
