@@ -381,6 +381,8 @@ Se han implementado pruebas unitarias y de integración para asegurar el correct
 ./gradlew test
 ```
 
+NOTA: Para las pruebas de integración debe estar corriendo Docker en la máquina.
+
 ## Desafíos Adicionales y Mejoras Futuras
 
 - **Optimización de Consultas:** Mejorar el rendimiento en operaciones complejas sobre reservas y habitaciones.
