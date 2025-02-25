@@ -1,0 +1,30 @@
+logging:
+  level:
+    com.alfre.DHHotel: DEBUG
+    org:
+      springframework:
+        security: TRACE
+
+server.error.include-message: always
+
+management.endpoints.web.exposure.include: '*'
+
+spring:
+  application:
+    name: DHHotel
+
+datasource:
+  my-connection:
+    jdbc-url: jdbc:mariadb://localhost:3306/dhhotel
+    username: walrus
+    password: 12345
+    maximum-pool-size: 10
+    pool-name: "dhhotel-pool"
+    auto-commit: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /openapi.yml

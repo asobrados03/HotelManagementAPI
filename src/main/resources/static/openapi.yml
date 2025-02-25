@@ -1,0 +1,1336 @@
+openapi: 3.0.3
+info:
+  title: Hotel Management API
+  version: 1.0.0
+  description: |
+    API completa para la gestión integral de un sistema hotelero que incluye:
+    - Autenticación y gestión de usuarios
+    - Administración de habitaciones
+    - Gestión de reservaciones y pagos
+    - Administración de clientes y usuarios
+  contact:
+    name: Desarrollador de la API
+    email: alfredo.sobrados.gonzalez@gmail.com
+  license:
+    name: License MIT
+    url: https://mit-license.org/
+
+servers:
+  - url: http://localhost:8080/api
+    description: Entorno de desarrollo local
+
+tags:
+  - name: Authentication
+    description: Operaciones de autenticación y gestión de credenciales
+  - name: Administrators
+    description: Gestión de administradores del sistema
+  - name: Clients
+    description: Operaciones relacionadas con la administración de clientes
+  - name: Rooms
+    description: Gestión completa de habitaciones
+  - name: Reservations
+    description: Manejo de reservas, asignaciones y registros de pagos
+  - name: Payments
+    description: Gestión de transacciones y pagos
+
+paths:
+  # ==============================================
+  # Authentication Endpoints
+  # ==============================================
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Iniciar sesión en el sistema
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticación exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Credenciales inválidas o formato incorrecto
+        '404':
+          description: Usuario no encontrado
+
+  /auth/register/client:
+    post:
+      tags: [Authentication]
+      summary: Registrar cliente
+      operationId: registerClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequestClient'
+      responses:
+        '200':
+          description: Registro de cliente exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Error en el registro del cliente
+
+  /auth/register/admin:
+    post:
+      tags: [Authentication]
+      summary: Registrar administrador
+      operationId: registerAdministrator
+      security:
+        - bearerAuth: [superadmin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequestAdmin'
+      responses:
+        '200':
+          description: Registro de administrador exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Error en el registro del administrador
+
+  /auth/me/client:
+    get:
+      tags: [Authentication]
+      summary: Obtener información del cliente autenticado
+      operationId: getInfoClient
+      security:
+        - bearerAuth: [client]
+      responses:
+        '200':
+          description: Información del cliente obtenida correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInfo'
+        '500':
+          description: Error en la autenticación o en el servicio
+
+  /auth/me/admin:
+    get:
+      tags: [Authentication]
+      summary: Obtener información del administrador autenticado
+      operationId: getInfoAdmin
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '200':
+          description: Información del administrador obtenida correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInfo'
+        '500':
+          description: Error en la autenticación o en el servicio
+
+  /auth/me:
+    put:
+      tags: [Authentication]
+      summary: Actualizar perfil del cliente
+      operationId: updateProfile
+      security:
+        - bearerAuth: [client]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Perfil actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientInfo'
+        '400':
+          description: Error en la solicitud (datos inválidos)
+        '404':
+          description: Cliente no registrado
+
+  /auth/change-password:
+    put:
+      tags: [Authentication]
+      summary: Cambiar la contraseña del usuario
+      operationId: changePassword
+      security:
+        - bearerAuth: [admin, client]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Contraseña cambiada correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePasswordResponse'
+        '500':
+          description: Error en la autenticación o en el servicio
+
+  /auth/change-email:
+    put:
+      tags: [Authentication]
+      summary: Cambiar el correo electrónico del usuario
+      operationId: changeEmail
+      security:
+        - bearerAuth: [admin, client]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailRequest'
+      responses:
+        '200':
+          description: Correo electrónico actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeEmailResponse'
+        '400':
+          description: Error en la solicitud (datos inválidos)
+        '500':
+          description: Error en la autenticación o en el servicio
+
+  # ==============================================
+  # Administrators Endpoints
+  # ==============================================
+  /superadmin/admins:
+    get:
+      tags: [Administrators]
+      summary: Obtener todos los administradores
+      operationId: getAllAdministrators
+      security:
+        - bearerAuth: [superadmin]
+      responses:
+        '200':
+          description: Lista de administradores obtenida correctamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Administrator'
+        '404':
+          description: No hay administradores registrados
+        '500':
+          description: Error interno del servidor
+
+  /superadmin/admin/userId/{userId}:
+    get:
+      tags: [Administrators]
+      summary: Obtener administrador por userId
+      operationId: getAdministratorByUserId
+      security:
+        - bearerAuth: [superadmin]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Identificador del usuario (userId)
+          schema:
+            type: integer
+            example: 1001
+      responses:
+        '200':
+          description: Administrador encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Administrator'
+        '404':
+          description: El administrador solicitado no existe
+        '500':
+          description: Error interno del servidor
+
+  /superadmin/admin/id/{id}:
+    get:
+      tags: [Administrators]
+      summary: Obtener administrador por ID
+      operationId: getAdministratorById
+      security:
+        - bearerAuth: [superadmin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador único del administrador
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Administrador encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Administrator'
+        '404':
+          description: El administrador solicitado no existe
+        '500':
+          description: Error interno del servidor
+
+  /superadmin/admin/{userId}:
+    put:
+      tags: [Administrators]
+      summary: Actualizar datos de un administrador
+      operationId: updateAdministrator
+      security:
+        - bearerAuth: [superadmin]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: userId del administrador a actualizar
+          schema:
+            type: integer
+            example: 1001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Administrator'
+      responses:
+        '200':
+          description: Actualización exitosa
+        '400':
+          description: No se ha podido actualizar (datos inválidos o inexistentes)
+        '500':
+          description: Error interno del servidor
+
+  /superadmin/admin/{id}:
+    delete:
+      tags: [Administrators]
+      summary: Eliminar un administrador por ID
+      operationId: deleteAdministrator
+      security:
+        - bearerAuth: [superadmin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del administrador a eliminar
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: Administrador eliminado correctamente
+        '400':
+          description: No se ha podido eliminar (ID inválido o inexistente)
+        '500':
+          description: Error interno del servidor
+
+  # ==============================================
+  # Clients Endpoints
+  # ==============================================
+  /admin/clients:
+    get:
+      tags:
+        - Clients
+      summary: Listar todos los clientes
+      operationId: getAllClients
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '200':
+          description: Lista completa de clientes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        '404':
+          description: No hay clientes registrados
+        '500':
+          description: Error interno del servidor
+
+  /admin/client/{id}:
+    get:
+      tags: [Clients]
+      summary: Obtener cliente por ID
+      operationId: getClientById
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador único del cliente
+          schema:
+            type: integer
+            example: 123
+      responses:
+        '200':
+          description: Detalles del cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: El cliente solicitado no existe
+        '500':
+          description: Error interno del servidor
+
+    delete:
+      tags: [Clients]
+      summary: Eliminar cliente por ID
+      operationId: deleteClient
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del cliente a eliminar
+          schema:
+            type: integer
+            example: 123
+      responses:
+        '200':
+          description: Cliente eliminado correctamente
+        '404':
+          description: El cliente no ha sido eliminado (no existe)
+        '500':
+          description: Error interno del servidor
+
+  # ==============================================
+  # Rooms Endpoints
+  # ==============================================
+  /admin/rooms:
+    get:
+      tags: [Rooms]
+      summary: Listar todas las habitaciones
+      operationId: getAllRooms
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '200':
+          description: Lista completa de habitaciones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '404':
+          description: No hay habitaciones registradas
+        '500':
+          description: Error interno del servidor
+
+  /admin/room/{id}:
+    get:
+      tags: [Rooms]
+      summary: Obtener una habitación por ID
+      operationId: getRoomById
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador único de la habitación
+          schema:
+            type: integer
+            example: 101
+      responses:
+        '200':
+          description: Detalles de la habitación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '404':
+          description: La habitación solicitada no existe
+        '500':
+          description: Error interno del servidor
+    put:
+      tags: [Rooms]
+      summary: Actualizar información de una habitación
+      operationId: updateRoom
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador de la habitación a actualizar
+          schema:
+            type: integer
+            example: 101
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+      responses:
+        '200':
+          description: La actualización se ha hecho correctamente
+        '400':
+          description: No se ha podido actualizar la habitación
+        '500':
+          description: Error interno del servidor
+
+  /admin/room:
+    post:
+      tags: [Rooms]
+      summary: Crear una nueva habitación
+      operationId: createRoom
+      security:
+        - bearerAuth: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Room'
+      responses:
+        '200':
+          description: Habitación creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          description: Error en la creación de la habitación
+        '500':
+          description: Error interno del servidor
+
+  /admin/room/{idDeleteRoom}:
+    delete:
+      tags: [Rooms]
+      summary: Eliminar una habitación por ID
+      operationId: deleteRoom
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: idDeleteRoom
+          in: path
+          required: true
+          description: ID de la habitación a eliminar
+          schema:
+            type: integer
+            example: 101
+      responses:
+        '200':
+          description: La habitación se ha eliminado correctamente
+        '400':
+          description: No se ha podido eliminar la habitación
+        '500':
+          description: Error interno del servidor
+
+  /public/rooms/type/{type}:
+    get:
+      tags: [Public Rooms]
+      summary: Obtener habitaciones por tipo
+      operationId: getRoomsByType
+      parameters:
+        - name: type
+          in: path
+          required: true
+          description: Tipo de habitación a buscar
+          schema:
+            $ref: '#/components/schemas/RoomType'
+      responses:
+        '200':
+          description: Lista de habitaciones del tipo solicitado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomDTO'
+        '404':
+          description: No hay habitaciones del tipo solicitado
+        '500':
+          description: Error interno del servidor
+
+  /public/rooms/available:
+    get:
+      tags: [Public Rooms]
+      summary: Obtener habitaciones disponibles
+      operationId: getAvailableRooms
+      responses:
+        '200':
+          description: Lista de habitaciones disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomDTO'
+        '404':
+          description: No hay habitaciones disponibles
+        '500':
+          description: Error interno del servidor
+
+  /admin/rooms/{id}/status/{status}:
+    put:
+      tags: [Rooms]
+      summary: Actualizar el estado de una habitación
+      operationId: updateStatus
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la habitación a actualizar
+          schema:
+            type: integer
+            example: 101
+        - name: status
+          in: path
+          required: true
+          description: Nuevo estado de la habitación
+          schema:
+            $ref: '#/components/schemas/RoomStatus'
+      responses:
+        '200':
+          description: La actualización se ha hecho correctamente
+        '500':
+          description: No se ha podido actualizar la habitación o error interno
+
+  /admin/rooms/maintenance:
+    get:
+      tags: [Rooms]
+      summary: Obtener habitaciones en mantenimiento
+      operationId: getRoomsInMaintenance
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '200':
+          description: Lista de habitaciones en mantenimiento
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+        '404':
+          description: No hay habitaciones en mantenimiento
+        '500':
+          description: Error interno del servidor
+
+  # ==============================================
+  # Reservations Endpoints
+  # ==============================================
+  /admin/reservations:
+    get:
+      tags: [Reservations]
+      summary: Obtener todas las reservas (admin)
+      operationId: getAllReservations
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '200':
+          description: Lista de reservas obtenida correctamente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+        '404':
+          description: No hay reservas registradas.
+        '500':
+          description: Error interno del servidor.
+
+  /admin/reservation/{id}:
+    get:
+      tags: [Reservations]
+      summary: Obtener reserva por ID (admin)
+      operationId: getReservationById
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identificador único de la reserva.
+          schema:
+            type: integer
+            example: 1001
+      responses:
+        '200':
+          description: Reserva encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          description: La reserva solicitada no existe.
+        '500':
+          description: Error interno del servidor.
+    delete:
+      tags: [Reservations]
+      summary: Cancelar reserva por ID (admin)
+      operationId: cancelReservation
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la reserva a cancelar.
+          schema:
+            type: integer
+            example: 1001
+      responses:
+        '200':
+          description: La cancelación se ha hecho correctamente.
+        '400':
+          description: No se ha podido cancelar la reserva.
+        '500':
+          description: Error interno del servidor.
+
+  /client/reservations/my:
+    get:
+      tags: [Reservations]
+      summary: Obtener reservas asociadas al cliente autenticado
+      operationId: getReservationsByClient
+      security:
+        - bearerAuth: [client]
+      responses:
+        '200':
+          description: Lista de reservas del cliente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+        '404':
+          description: No hay reservas asociadas al cliente.
+        '500':
+          description: Error interno del servidor.
+
+  /client/reservation:
+    post:
+      tags: [Reservations]
+      summary: Crear una nueva reserva (cliente)
+      operationId: createReservation
+      security:
+        - bearerAuth: [client]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+      responses:
+        '200':
+          description: Reserva creada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          description: Error al crear la reserva.
+        '500':
+          description: Error interno del servidor.
+
+  /reservation/{id}:
+    put:
+      tags: [Reservations]
+      summary: Actualizar una reserva existente
+      operationId: updateReservation
+      security:
+        - bearerAuth: [admin, client]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la reserva a actualizar.
+          schema:
+            type: integer
+            example: 1001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reservation'
+      responses:
+        '200':
+          description: La actualización se ha hecho correctamente.
+        '400':
+          description: Error al actualizar la reserva.
+        '500':
+          description: Error interno del servidor.
+
+  /admin/reservation/{id}/payment:
+    post:
+      tags: [Payments]
+      summary: Crear pago para una reserva (admin)
+      operationId: createPaymentOfReservation
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la reserva para la cual se crea el pago.
+          schema:
+            type: integer
+            example: 1001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+      responses:
+        '200':
+          description: Pago creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          description: Error al crear el pago.
+        '500':
+          description: Error interno del servidor.
+
+  /admin/reservations/{id}/payments:
+    get:
+      tags: [Payments]
+      summary: Obtener pagos asociados a una reserva (o cliente) (admin)
+      operationId: getPaymentsByClient
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la reserva (o cliente) para la cual se obtienen los pagos.
+          schema:
+            type: integer
+            example: 1001
+      responses:
+        '200':
+          description: Lista de pagos obtenida correctamente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+        '404':
+          description: No hay pagos asociados.
+        '500':
+          description: Error interno del servidor.
+
+  # ==============================================
+  # Payments Endpoints
+  # ==============================================
+  /admin/payments:
+    get:
+      tags: [Payments]
+      summary: Obtener todos los pagos (admin)
+      operationId: getAllPayments
+      security:
+        - bearerAuth: [admin]
+      responses:
+        '200':
+          description: Lista de pagos obtenida correctamente.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+        '404':
+          description: No hay pagos registrados en el sistema.
+        '500':
+          description: Error interno del servidor.
+
+  /admin/payment/{id}:
+    get:
+      tags: [Payments]
+      summary: Obtener pago por ID (admin)
+      operationId: getPaymentById
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del pago.
+          schema:
+            type: integer
+            example: 5001
+      responses:
+        '200':
+          description: Pago encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '404':
+          description: El pago solicitado no existe.
+        '500':
+          description: Error interno del servidor.
+
+  /admin/payment/reservation/id/{reservationId}:
+    get:
+      tags: [Payments]
+      summary: Obtener pagos por ID de reservación (admin)
+      operationId: getPaymentsByReservationId
+      security:
+        - bearerAuth: [admin]
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          description: ID de la reservación asociada a los pagos.
+          schema:
+            type: integer
+            example: 1001
+      responses:
+        '200':
+          description: Lista de pagos asociados a la reservación.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+        '404':
+          description: No hay pagos registrados asociados a la reserva.
+        '500':
+          description: Error interno del servidor.
+
+  /superadmin/payment/{id}:
+    put:
+      tags: [Payments]
+      summary: Actualizar información de un pago (superadmin)
+      operationId: updatePayment
+      security:
+        - bearerAuth: [superadmin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del pago a actualizar.
+          schema:
+            type: integer
+            example: 5001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+      responses:
+        '200':
+          description: Pago actualizado correctamente.
+        '400':
+          description: No se ha podido actualizar el pago.
+        '500':
+          description: Error interno del servidor.
+
+    delete:
+      tags: [Payments]
+      summary: Eliminar un pago por ID (superadmin)
+      operationId: deletePayment
+      security:
+        - bearerAuth: [superadmin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del pago a eliminar.
+          schema:
+            type: integer
+            example: 5001
+      responses:
+        '200':
+          description: Pago eliminado correctamente.
+        '400':
+          description: No se ha podido eliminar el pago.
+        '500':
+          description: Error interno del servidor.
+
+components:
+  schemas:
+    # Authentication
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: usuario@dhhotel.com
+        password:
+          type: string
+          format: password
+          example: SecurePass123!
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    RegisterRequestAdmin:
+      type: object
+      properties:
+        username:
+          type: string
+          format: email
+          example: usuario@dhhotel.com
+        password:
+          type: string
+          format: password
+          example: SecurePass123!
+        role:
+          type: string
+          enum: [SUPERADMIN, ADMIN, CLIENT]
+          example: CLIENT
+        name:
+          type: string
+          example: Domingo Suárez
+      required:
+        - username
+        - email
+        - role
+        - password
+
+    RegisterRequestClient:
+      type: object
+      properties:
+        username:
+          type: string
+          format: email
+          example: usuario@dhhotel.com
+        password:
+          type: string
+          format: password
+          example: SecurePass123!
+        role:
+          type: string
+          enum: [SUPERADMIN, ADMIN, CLIENT]
+          example: CLIENT
+        first_name:
+          type: string
+          example: Roberto
+        last_name:
+          type: string
+          example: Pérez
+        phone:
+          type: string
+          format: phone
+          example: +34 612 234 435
+      required:
+        - username
+        - password
+        - first_name
+        - last_name
+        - phone
+        - role
+
+    ClientInfo:
+      type: object
+      properties:
+        email:
+          type: string
+          example: ramon@dhhotel.com
+        first_name:
+          type: string
+          example: Ramón
+        last_name:
+          type: string
+          example: Álvarez
+        phone:
+          type: string
+          example: +34 654 123 456
+      required:
+        - email
+        - first_name
+        - last_name
+        - phone
+
+    AdminInfo:
+      type: object
+      properties:
+        email:
+          type: string
+          example: julian@dhhotel.com
+        name:
+          type: string
+          example: Julián Lago
+        role:
+          type: string
+          enum: [ADMIN, SUPERADMIN]
+          example: ADMIN
+      required:
+        - email
+        - name
+        - role
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          example: Joaquín
+        last_name:
+          type: string
+          example: García
+        email:
+          type: string
+          example: joaquin@dhhotel.com
+      required:
+        - first_name
+        - last_name
+        - email
+
+    ChangePasswordRequest:
+      type: object
+      properties:
+        newPassword:
+          type: string
+          example: newPasswordSecure12!
+      required:
+        - newPassword
+
+    ChangePasswordResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          example: Cambio de email CORRECTO.
+      required:
+        - response
+
+    ChangeEmailRequest:
+      type: object
+      properties:
+        newEmail:
+          type: string
+          example: newEmail@dhhotel.com
+      required:
+        - newEmail
+
+    ChangeEmailResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          example: Cambio de contraseña CORRECTO.
+      required:
+        - response
+
+    # Clients
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 2
+        first_name:
+          type: string
+          example: "Juan"
+        last_name:
+          type: string
+          example: "Pérez"
+        phone:
+          type: string
+          example: +34 687 123 456
+      required:
+        - id
+        - user_id
+        - first_name
+        - last_name
+        - phone
+
+    # Users
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        email:
+          type: string
+          example: juan@dhhotel.com
+        password:
+          type: string
+          example: securePassword123|
+        role:
+          type: string
+          enum: [SUPERADMIN, ADMIN, CLIENT]
+          example: CLIENT
+      required:
+        - id
+        - email
+        - password
+        - role
+
+
+    Administrator:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 5
+        userId:
+          type: integer
+          example: 6
+        name:
+          type: string
+          example: "Álvaro Sanz"
+      required:
+        - id
+        - userId
+        - name
+
+    # Rooms
+    Room:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 101
+        type:
+          type: string
+          enum: [SINGLE, DOUBLE, SUITE]
+          example: DOUBLE
+        status:
+          type: string
+          enum: [AVAILABLE, OCCUPIED, MAINTENANCE]
+          example: AVAILABLE
+        price:
+          type: number
+          format: double
+          example: 150.50
+      required:
+        - id
+        - type
+        - status
+        - price
+    RoomDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 101
+        type:
+          type: string
+          enum: [SINGLE, DOUBLE, SUITE]
+          example: SINGLE
+        status:
+          type: string
+          enum: [AVAILABLE, OCCUPIED, MAINTENANCE]
+          example: AVAILABLE
+      required:
+        - id
+        - type
+        - status
+
+    RoomType:
+      type: string
+      enum: [SINGLE, DOUBLE, SUITE]
+      example: SUITE
+
+    RoomStatus:
+      type: string
+      enum: [AVAILABLE, OCCUPIED, MAINTENANCE]
+      example: AVAILABLE
+
+    # Payments and Reservations
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1001
+        clientId:
+          type: integer
+          example: 123
+        roomId:
+          type: integer
+          example: 101
+        totalPrice:
+          type: double
+          example: 450.67
+        startDate:
+          type: string
+          format: date
+          example: "2025-03-01"
+        endDate:
+          type: string
+          format: date
+          example: "2025-03-05"
+        status:
+          type: string
+          enum: [CONFIRMED, PENDING, CANCELED]
+          example: CONFIRMED
+      required:
+        - clientId
+        - roomId
+        - totalPrice
+        - startDate
+        - endDate
+        - status
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1001
+        amount:
+          type: number
+          example: 450.75
+        payment_date:
+          type: date
+          example: "2024-01-12"
+        method:
+          type: string
+          enum: [CARD, CASH, TRANSFER]
+          example: CARD
+      required:
+        - id
+        - amount
+        - payment_date
+        - method
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []

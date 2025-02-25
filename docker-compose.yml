@@ -1,0 +1,19 @@
+services:
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_USER=walrus
+      - MARIADB_PASSWORD=12345
+      - MARIADB_DATABASE=dhhotel
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./src/test/resources/db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
