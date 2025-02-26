@@ -381,7 +381,8 @@ Se han implementado pruebas unitarias y de integración para asegurar el correct
 ./gradlew test
 ```
 
-NOTA: Para las pruebas de integración debe estar corriendo Docker en la máquina.
+> [!IMPORTANT]
+> Para las pruebas de integración debe estar corriendo Docker en la máquina.
 
 ## Desafíos Adicionales y Mejoras Futuras
 
