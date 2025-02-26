@@ -23,6 +23,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.test.util.ReflectionTestUtils;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the user operations JDBC repository implementation.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class UserJdbcRepositoryTest {
 
@@ -38,14 +44,28 @@ public class UserJdbcRepositoryTest {
     private UserJdbcRepository userRepository;
     private final String table = "Users";
 
+    /**
+     * Sets up the UserJdbcRepository instance before each test.
+     * <p>
+     * This method instantiates the repository by injecting the mocked jdbcTemplate and dataSource,
+     * and then replaces the internal SimpleJdbcInsert instance with a mock using ReflectionTestUtils.
+     * </p>
+     */
     @BeforeEach
-    void setUp() {
-        // Se inyectan jdbcTemplate y dataSource en el constructor
+    void setup() {
+        // Inject the mocks into the repository constructor.
         userRepository = new UserJdbcRepository(jdbcTemplate, dataSource);
-        // Reemplazamos la instancia interna de SimpleJdbcInsert por el mock
+        // Replace the internal SimpleJdbcInsert instance with the mock.
         ReflectionTestUtils.setField(userRepository, "insert", insert);
     }
 
+    /**
+     * Tests that getUserByEmail returns a User when the user is found in the database.
+     * <p>
+     * The test stubs the jdbcTemplate queryForObject method to return a dummy User and then verifies
+     * that the returned Optional contains the expected User.
+     * </p>
+     */
     @Test
     void testGetUserByEmail_found() {
         // Arrange
@@ -65,6 +85,13 @@ public class UserJdbcRepositoryTest {
         assertEquals(user, result.get(), "El usuario retornado debe coincidir");
     }
 
+    /**
+     * Tests that getUserByEmail returns an empty Optional when the user is not found.
+     * <p>
+     * The test stubs the jdbcTemplate queryForObject method to throw an EmptyResultDataAccessException,
+     * and then verifies that the returned Optional is empty.
+     * </p>
+     */
     @Test
     void testGetUserByEmail_notFound() {
         // Arrange
@@ -81,6 +108,13 @@ public class UserJdbcRepositoryTest {
         assertFalse(result.isPresent(), "No se debe encontrar el usuario");
     }
 
+    /**
+     * Tests that createUser correctly inserts a new user and returns the generated ID.
+     * <p>
+     * The test stubs the SimpleJdbcInsert's executeAndReturnKey method to return a dummy ID,
+     * and verifies that the parameters passed to the insert match the new user's properties.
+     * </p>
+     */
     @Test
     void testCreateUser() {
         // Arrange
@@ -101,6 +135,13 @@ public class UserJdbcRepositoryTest {
         assertEquals(newUser.role, params.getValue("role"), "El role debe coincidir");
     }
 
+    /**
+     * Tests that updateUser correctly updates an existing user.
+     * <p>
+     * The test stubs the jdbcTemplate update method to return 1 (indicating one row updated)
+     * and verifies that the correct SQL parameters were passed to the update.
+     * </p>
+     */
     @Test
     void testUpdateUser() {
         // Arrange
@@ -122,6 +163,13 @@ public class UserJdbcRepositoryTest {
         assertEquals(user.role.name(), params.getValue("role"), "El role debe coincidir");
     }
 
+    /**
+     * Tests that deleteUser correctly deletes a user and returns the number of rows affected.
+     * <p>
+     * The test stubs the jdbcTemplate update method for the DELETE SQL and verifies that the expected number of rows
+     * is deleted, as well as the correct SQL parameters.
+     * </p>
+     */
     @Test
     void testDeleteUser() {
         // Arrange

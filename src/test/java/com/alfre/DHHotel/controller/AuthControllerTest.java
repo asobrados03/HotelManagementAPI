@@ -25,6 +25,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the authentication and authorization operations controller.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class AuthControllerTest {
     @Mock
@@ -40,20 +46,27 @@ public class AuthControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Configures MockMvc in standalone mode with the AuthController.
+     */
     @BeforeEach
-    void setup() {
-        // Configuramos MockMVC en modo standalone
+    public void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
     }
 
+    /**
+     * Tests that when a login request is made with valid credentials, the endpoint returns a token.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void whenLogin_withValidCredentials_thenReturnsToken() throws Exception {
-        // Preparar
+        // Arrange: create a valid login request and stub the use case to return a token.
         LoginRequest loginRequest = new LoginRequest("user", "password");
         when(authUseCase.login(any(LoginRequest.class)))
                 .thenReturn(new AuthResponse("token123"));
 
-        // Ejecutar
+        // Act & Assert: perform the POST request and expect a 200 OK with a token in the response.
         mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -61,54 +74,67 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("token123"));
 
-        // Verificar
+        // Verify that the login method was called.
         verify(authUseCase).login(any(LoginRequest.class));
     }
 
+    /**
+     * Tests that when a login request is made with invalid credentials, the endpoint returns a 404 Not Found with an error.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void whenLogin_withInvalidCredentials_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Arrange: create a login request with an incorrect password.
         LoginRequest loginRequest = new LoginRequest("user", "wrongpassword");
-
         when(authUseCase.login(any(LoginRequest.class)))
                 .thenThrow(new RuntimeException("Credenciales inválidas"));
 
-        // Ejecutar y verificar
+        // Act & Assert: perform the POST request and expect a 404 Not Found with the specified error message.
         mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isNotFound()) // HTTP 404 Not Found
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Credenciales inválidas"));
 
-        // Verificar que se llamó al método login
+        // Verify that the login method was invoked.
         verify(authUseCase).login(any(LoginRequest.class));
     }
 
+    /**
+     * Tests that when a login request is made with null credentials, the endpoint returns a 400 Bad Request.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void whenLogin_withNullCredentials_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Arrange: create a login request with null values.
         LoginRequest loginRequest = new LoginRequest(null, null);
-
         when(authUseCase.login(any(LoginRequest.class)))
                 .thenThrow(new IllegalArgumentException("Los campos obligatorios no pueden ser nulos"));
 
-        // Ejecutar y verificar
+        // Act & Assert: perform the POST request and expect a 400 Bad Request with the appropriate error message.
         mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isBadRequest()) // HTTP 400 Bad Request
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error")
                         .value("Los campos obligatorios no pueden ser nulos"));
 
-        // Verificar que se llamó al método login
+        // Verify that the login method was called.
         verify(authUseCase).login(any(LoginRequest.class));
     }
 
+    /**
+     * Tests that registering a client with valid fields returns a token.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void whenRegisterClient_withValidFields_thenReturnsToken() throws Exception {
-        // Preparar
+        // Arrange: prepare a valid client registration request.
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setUsername("username@example.com");
         registerRequest.setPassword("securePassword");
@@ -120,7 +146,7 @@ public class AuthControllerTest {
         when(authUseCase.registerClient(any(RegisterRequest.class)))
                 .thenReturn(new AuthResponse("token123"));
 
-        // Ejecutar
+        // Act & Assert: perform the POST request and verify a token is returned.
         mockMvc.perform(post("/api/auth/register/client")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -128,26 +154,30 @@ public class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("token123"));
 
-        // Verificar
         verify(authUseCase).registerClient(any(RegisterRequest.class));
     }
 
+    /**
+     * Tests that registering a client with invalid fields (e.g. malformed email) returns a 400 Bad Request.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void whenRegisterClient_withInvalidFields_thenThrowsException() throws Exception {
-        // Preparar: Creamos un RegisterRequest con datos inválidos (por ejemplo, un email mal formado)
+        // Arrange: prepare a registration request with an invalid email.
         RegisterRequest registerRequest = new RegisterRequest();
-        registerRequest.setUsername("invalid-email"); // email inválido
+        registerRequest.setUsername("invalid-email"); // Invalid email format
         registerRequest.setPassword("password");
         registerRequest.setRole(Role.CLIENT);
         registerRequest.setFirst_name("Melissa");
         registerRequest.setLast_name("Ericsson");
         registerRequest.setPhone("+34 655 456 767");
 
-        // Stub: Simulamos que al intentar registrar se lanza una excepción
+        // Stub: simulate that registration fails due to invalid email.
         when(authUseCase.registerClient(any(RegisterRequest.class)))
                 .thenThrow(new IllegalArgumentException("Formato de correo electrónico inválido"));
 
-        // Ejecutar & Verificar: Se realiza la petición y se verifica que se devuelva un BAD_REQUEST con el mensaje esperado
+        // Act & Assert: perform the POST request and verify a 400 Bad Request is returned with the error message.
         mockMvc.perform(post("/api/auth/register/client")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -158,8 +188,14 @@ public class AuthControllerTest {
         verify(authUseCase).registerClient(any(RegisterRequest.class));
     }
 
+    /**
+     * Tests that registering an administrator with valid data returns a token.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void whenRegisterAdmin_withValidData_thenReturnsToken() throws Exception {
+        // Arrange: prepare a valid admin registration request.
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setUsername("admin@example.com");
         registerRequest.setPassword("password");
@@ -169,6 +205,7 @@ public class AuthControllerTest {
         AuthResponse response = new AuthResponse("adminToken123");
         when(authUseCase.registerAdministrator(any(RegisterRequest.class))).thenReturn(response);
 
+        // Act & Assert: perform the POST request and verify the token is returned.
         mockMvc.perform(post("/api/auth/register/admin")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -179,8 +216,14 @@ public class AuthControllerTest {
         verify(authUseCase).registerAdministrator(any(RegisterRequest.class));
     }
 
+    /**
+     * Tests that registering an administrator with invalid data returns a 400 Bad Request.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void whenRegisterAdmin_withInvalidData_thenReturnsBadRequest() throws Exception {
+        // Arrange: prepare an admin registration request with an invalid email.
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setUsername("invalid-email");
         registerRequest.setPassword("password");
@@ -190,6 +233,7 @@ public class AuthControllerTest {
         when(authUseCase.registerAdministrator(any(RegisterRequest.class)))
                 .thenThrow(new RuntimeException("Datos inválidos para administrador"));
 
+        // Act & Assert: perform the POST request and expect a 400 Bad Request with the error message.
         mockMvc.perform(post("/api/auth/register/admin")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -200,10 +244,16 @@ public class AuthControllerTest {
         verify(authUseCase).registerAdministrator(any(RegisterRequest.class));
     }
 
+    /**
+     * Tests that when retrieving client information with a valid authenticated user, the endpoint returns
+     * the correct client info.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenGetInfoClient_withValidUser_thenReturnsClientInfo() throws Exception {
-        // Creamos un objeto ClientDTO con los datos esperados
+        // Arrange: build the expected ClientDTO.
         ClientDTO clientDTO = ClientDTO.builder()
                 .firstName("John")
                 .lastName("Doe")
@@ -211,10 +261,9 @@ public class AuthControllerTest {
                 .phone("123456789")
                 .build();
 
-        // Stub: authUseCase.getInfoClient debe retornar el DTO
         when(authUseCase.getInfoClient(any(User.class))).thenReturn(clientDTO);
 
-        // Realizamos la petición e imprimimos la respuesta para depuración (andDo(print()))
+        // Act & Assert: perform GET request and verify the JSON response.
         mockMvc.perform(get("/api/auth/me/client")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -225,10 +274,14 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.email").value("john@example.com"))
                 .andExpect(jsonPath("$.phone").value("123456789"));
 
-        // Verificamos que se invoca el método en authUseCase
         verify(authUseCase).getInfoClient(any(User.class));
     }
 
+    /**
+     * Tests that when an error occurs while retrieving client information, the endpoint returns a 500 Internal Server Error.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenGetInfoClient_withError_thenReturnsInternalServerError() throws Exception {
@@ -245,6 +298,12 @@ public class AuthControllerTest {
         verify(authUseCase).getInfoClient(any(User.class));
     }
 
+    /**
+     * Tests that when retrieving administrator information with a valid authenticated admin user,
+     * the endpoint returns the correct admin info.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser(username = "admin", roles = {"ROLE_ADMIN"})
     public void whenGetInfoAdmin_withValidUser_thenReturnsAdminInfo() throws Exception {
@@ -266,6 +325,12 @@ public class AuthControllerTest {
         verify(authUseCase).getInfoAdmin(any(User.class));
     }
 
+    /**
+     * Tests that when an error occurs while retrieving administrator information,
+     * the endpoint returns a 500 Internal Server Error.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenGetInfoAdmin_withError_thenReturnsInternalServerError() throws Exception {
@@ -282,6 +347,11 @@ public class AuthControllerTest {
         verify(authUseCase).getInfoAdmin(any(User.class));
     }
 
+    /**
+     * Tests that updating a client's profile with valid data returns the updated profile.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenUpdateProfile_success_thenReturnsUpdatedProfile() throws Exception {
@@ -310,6 +380,12 @@ public class AuthControllerTest {
         verify(clientUseCase).updateClientProfile(any(User.class), any(UpdateProfileRequest.class));
     }
 
+    /**
+     * Tests that if updating the client profile results in an IllegalArgumentException,
+     * the endpoint returns a 400 Bad Request with the corresponding error message.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenUpdateProfile_illegalArgument_thenReturnsBadRequest() throws Exception {
@@ -330,6 +406,12 @@ public class AuthControllerTest {
         verify(clientUseCase).updateClientProfile(any(User.class), any(UpdateProfileRequest.class));
     }
 
+    /**
+     * Tests that if updating the client profile throws a RuntimeException indicating the client is not registered,
+     * the endpoint returns a 404 Not Found with the appropriate error message.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenUpdateProfile_runtimeException_thenReturnsNotFound() throws Exception {
@@ -350,10 +432,15 @@ public class AuthControllerTest {
         verify(clientUseCase).updateClientProfile(any(User.class), any(UpdateProfileRequest.class));
     }
 
+    /**
+     * Tests that when changing the password with valid data, the endpoint returns a success message.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenChangePassword_success_thenReturnsSuccessMessage() throws Exception {
-        // Suponemos que UserDTO tiene un campo newPassword
+        // Assume that UserDTO has a field newPassword.
         UserDTO request = new UserDTO();
         request.newPassword = "newPassword123";
 
@@ -370,6 +457,11 @@ public class AuthControllerTest {
         verify(authUseCase).changePassword(any(User.class), eq("newPassword123"));
     }
 
+    /**
+     * Tests that when changing the password fails, the endpoint returns a 500 Internal Server Error with the proper error message.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenChangePassword_failure_thenReturnsInternalServerError() throws Exception {
@@ -390,6 +482,11 @@ public class AuthControllerTest {
         verify(authUseCase).changePassword(any(User.class), eq("newPassword123"));
     }
 
+    /**
+     * Tests that when changing the email with valid data, the endpoint returns a success message.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenChangeEmail_success_thenReturnsSuccessMessage() throws Exception {
@@ -409,13 +506,18 @@ public class AuthControllerTest {
         verify(authUseCase).changeEmail(any(User.class), eq("newemail@example.com"));
     }
 
+    /**
+     * Tests that when changing the email with an invalid email format, the endpoint returns a 400 Bad Request.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenChangeEmail_illegalArgument_thenReturnsBadRequest() throws Exception {
         UserDTO request = new UserDTO();
         request.newEmail = "invalid_email";
 
-        when(authUseCase.changeEmail(any(com.alfre.DHHotel.domain.model.User.class), eq("invalid_email")))
+        when(authUseCase.changeEmail(any(User.class), eq("invalid_email")))
                 .thenThrow(new IllegalArgumentException("Formato de correo electrónico inválido"));
 
         mockMvc.perform(put("/api/auth/change-email")
@@ -428,6 +530,11 @@ public class AuthControllerTest {
         verify(authUseCase).changeEmail(any(User.class), eq("invalid_email"));
     }
 
+    /**
+     * Tests that when changing the email results in a runtime exception, the endpoint returns a 500 Internal Server Error.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     @WithMockUser
     public void whenChangeEmail_runtimeException_thenReturnsInternalServerError() throws Exception {

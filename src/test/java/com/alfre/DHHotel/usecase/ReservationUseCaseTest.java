@@ -23,6 +23,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the reservations operations business logic.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class ReservationUseCaseTest {
     @Mock
@@ -36,32 +42,41 @@ public class ReservationUseCaseTest {
 
     private ReservationUseCase reservationUseCase;
 
+    /**
+     * Initializes the test environment before each test by creating a spy for ReservationUseCase.
+     */
     @BeforeEach
     public void setup() {
         reservationUseCase = spy(new ReservationUseCase(reservationRepository, paymentRepository, roomRepository,
                 clientRepository));
     }
 
+    /**
+     * Tests that getAllReservations() returns the expected list of reservations from the repository.
+     */
     @Test
     public void getAllReservations_success() {
-        // Arrange: Preparamos una lista de reservas
+        // Arrange: Prepare a list of reservations
         List<Reservation> reservationList = new ArrayList<>();
         Reservation reservation = new Reservation();
-        // Configuramos las propiedades de reservation si es necesario
+        // Configure reservation properties if necessary
         reservationList.add(reservation);
         when(reservationRepository.getAllReservations()).thenReturn(reservationList);
 
-        // Act: Ejecutamos el método
+        // Act: Execute the method
         List<Reservation> result = reservationUseCase.getAllReservations();
 
-        // Assert: Verificamos que el resultado sea el esperado y se llamó al método del repository
+        // Assert: Verify that the result matches the expected list and that the repository method was called
         assertEquals(reservationList, result);
         verify(reservationRepository).getAllReservations();
     }
 
+    /**
+     * Tests that getReservationById() returns the reservation when a valid id is provided.
+     */
     @Test
     public void getReservationById_success() {
-        // Arrange: Creamos una reserva y simulamos su retorno para el identificador dado
+        // Arrange: Create a reservation and simulate its return for the given identifier
         Reservation reservation = new Reservation();
         when(reservationRepository.getReservationById(10L)).thenReturn(Optional.of(reservation));
 
@@ -74,9 +89,12 @@ public class ReservationUseCaseTest {
         verify(reservationRepository).getReservationById(10L);
     }
 
+    /**
+     * Tests that getReservationsByClient() returns the correct list of reservations for a given client.
+     */
     @Test
     public void getReservationsByClient_success() {
-        // Arrange: Creamos el usuario asociado al cliente, el cliente y la lista de reservas
+        // Arrange: Create a reservation, client, and the corresponding list of reservations
         Reservation reservation = new Reservation();
         List<Reservation> reservationList = new ArrayList<>();
         reservationList.add(reservation);
@@ -99,24 +117,29 @@ public class ReservationUseCaseTest {
         verify(reservationRepository).getReservationsByClientId(client.id);
     }
 
+    /**
+     * Tests that getReservationsByClient() throws a RuntimeException when the client is not found.
+     */
     @Test
     public void getReservationsByClient_failure_shouldThrowException() {
-        // Arrange: Creamos el usuario asociado al cliente
+        // Arrange: Create a user for which no client is found
         User user = new User();
         user.setId(5L);
 
         when(clientRepository.getClientByUserId(user.id)).thenReturn(Optional.empty());
 
-        // Act
+        // Act & Assert
         Exception exception = assertThrows(RuntimeException.class, () ->
                 reservationUseCase.getReservationsByClient(user)
         );
 
-        // Assert
         assertEquals("El cliente autenticado no existe", exception.getMessage());
         verify(clientRepository).getClientByUserId(user.id);
     }
 
+    /**
+     * Tests that a client can successfully create a reservation when all conditions are met.
+     */
     @Test
     public void createReservation_success_byClient() {
         // Arrange
@@ -152,6 +175,9 @@ public class ReservationUseCaseTest {
         verify(clientRepository).getClientByUserId(user.id);
     }
 
+    /**
+     * Tests that an admin can successfully create a reservation without requiring client verification.
+     */
     @Test
     public void createReservation_success_byAdmin() {
         // Arrange
@@ -181,6 +207,9 @@ public class ReservationUseCaseTest {
         verify(roomRepository).getRoomById(newReservation.room_id);
     }
 
+    /**
+     * Tests that createReservation() throws an exception when the room is not available for the selected dates.
+     */
     @Test
     public void createReservation_roomIsNotAvailable_shouldThrowException() {
         // Arrange
@@ -190,47 +219,53 @@ public class ReservationUseCaseTest {
         when(reservationRepository.isRoomAvailable(newReservation.room_id, newReservation.start_date,
                 newReservation.end_date)).thenReturn(false);
 
-        // Act
+        // Act & Assert
         Exception exception = assertThrows(RuntimeException.class, () ->
-            reservationUseCase.createReservation(newReservation, user)
+                reservationUseCase.createReservation(newReservation, user)
         );
 
-        // Assert
         assertNotNull(exception);
         assertEquals("Habitación no disponible en las fechas solicitadas", exception.getMessage());
     }
 
+    /**
+     * Tests that createReservation() throws an exception when the check-in and check-out dates are the same.
+     */
     @Test
     public void createReservation_totalPriceMinusOne_sameDay_shouldThrowException() {
         // Arrange
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
-        // Para simular que la reserva se solicita para el mismo día:
+        // Simulate a reservation requested for the same day
         Date sameDay = new Date(1000L);
         newReservation.setStart_date(sameDay);
         newReservation.setEnd_date(sameDay);
 
         User user = new User();
-        user.setRole(Role.ADMIN); // El rol no afecta esta validación
+        user.setRole(Role.ADMIN); // Role does not affect this validation
 
         when(reservationRepository.isRoomAvailable(newReservation.room_id, newReservation.start_date,
                 newReservation.end_date)).thenReturn(true);
-        // Stub para que calculateTotal devuelva -1.0
+        // Stub calculateTotal to return -1.0
         when(reservationUseCase.calculateTotal(newReservation.start_date, newReservation.end_date,
                 newReservation.room_id)).thenReturn(BigDecimal.valueOf(-1.0));
 
         // Act & Assert
         Exception ex = assertThrows(RuntimeException.class, () ->
                 reservationUseCase.createReservation(newReservation, user));
-        assertEquals("La fecha de entrada y salida no pueden ser el mismo día. Debe haber al menos una noche de estancia.", ex.getMessage());
+        assertEquals("La fecha de entrada y salida no pueden ser el mismo día. Debe haber al menos una noche de"
+                + " estancia.", ex.getMessage());
     }
 
+    /**
+     * Tests that createReservation() throws an exception when the end date is before the start date.
+     */
     @Test
     public void createReservation_totalPriceMinusOne_endDateBeforeStartDate_shouldThrowException() {
         // Arrange
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
-        // Configuramos las fechas: la fecha de salida anterior a la de entrada
+        // Set dates: end date is before start date
         Date startDate = new Date(2000L);
         Date endDate = new Date(1000L);
         newReservation.setStart_date(startDate);
@@ -250,12 +285,16 @@ public class ReservationUseCaseTest {
         assertEquals("La fecha de salida no puede ser anterior a la fecha de entrada.", ex.getMessage());
     }
 
+    /**
+     * Tests that createReservation() throws an exception for other conditions that result in an invalid total price
+     * calculation.
+     */
     @Test
     public void createReservation_totalPriceMinusOne_otherCondition_shouldThrowException() {
         // Arrange
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
-        // Configuramos fechas válidas (diferentes y con end_date posterior a start_date)
+        // Set valid dates (different and with end_date after start_date)
         Date startDate = new Date(1000L);
         Date endDate = new Date(2000L);
         newReservation.setStart_date(startDate);
@@ -266,7 +305,7 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.isRoomAvailable(newReservation.room_id, newReservation.start_date,
                 newReservation.end_date)).thenReturn(true);
-        // Stub para que calculateTotal devuelva -1.0
+        // Stub calculateTotal to return -1.0
         when(reservationUseCase.calculateTotal(newReservation.start_date, newReservation.end_date, newReservation.room_id))
                 .thenReturn(BigDecimal.valueOf(-1.0));
 
@@ -277,12 +316,15 @@ public class ReservationUseCaseTest {
                 "habitación o si la habitación realmente existe.", ex.getMessage());
     }
 
+    /**
+     * Tests that createReservation() throws an exception when attempting to reserve a room that is under maintenance.
+     */
     @Test
     public void createReservation_roomInMaintenance_shouldThrowException() {
         // Arrange
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
-        // Configuramos fechas válidas
+        // Set valid dates
         Date startDate = new Date(1000L);
         Date endDate = new Date(2000L);
         newReservation.setStart_date(startDate);
@@ -293,10 +335,10 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.isRoomAvailable(newReservation.room_id, newReservation.start_date,
                 newReservation.end_date)).thenReturn(true);
-        // Stub para un total válido (por ejemplo, 10)
+        // Stub to return a valid total (e.g., 10)
         when(reservationUseCase.calculateTotal(newReservation.start_date, newReservation.end_date,
                 newReservation.room_id)).thenReturn(BigDecimal.TEN);
-        // Simulamos que la habitación está en mantenimiento
+        // Simulate that the room is under maintenance
         Room room = new Room();
         room.status = RoomStatus.MAINTENANCE;
         when(roomRepository.getRoomById(newReservation.room_id)).thenReturn(Optional.of(room));
@@ -307,6 +349,9 @@ public class ReservationUseCaseTest {
         assertEquals("No se puede reservar una habitación en mantenimiento.", ex.getMessage());
     }
 
+    /**
+     * Tests that createReservation() throws an exception when the specified room is not found.
+     */
     @Test
     public void createReservation_roomNotFound_shouldThrowException() {
         // Arrange
@@ -321,10 +366,10 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.isRoomAvailable(newReservation.room_id, newReservation.start_date,
                 newReservation.end_date)).thenReturn(true);
-        // Stub para calcular un total válido (por ejemplo, 10)
+        // Stub to calculate a valid total (e.g., 10)
         when(reservationUseCase.calculateTotal(newReservation.start_date, newReservation.end_date,
                 newReservation.room_id)).thenReturn(BigDecimal.TEN);
-        // Simulamos que no se encuentra la habitación
+        // Simulate that the room is not found
         when(roomRepository.getRoomById(newReservation.room_id)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -334,6 +379,9 @@ public class ReservationUseCaseTest {
         verify(roomRepository).getRoomById(newReservation.room_id);
     }
 
+    /**
+     * Tests that createReservation() throws an exception when the client associated with the user is not found.
+     */
     @Test
     public void createReservation_clientNotFound_shouldThrowException() {
         // Arrange
@@ -353,12 +401,12 @@ public class ReservationUseCaseTest {
         when(reservationUseCase.calculateTotal(newReservation.start_date, newReservation.end_date,
                 newReservation.room_id)).thenReturn(BigDecimal.TEN);
 
-        // Simulamos que se encuentra una habitación válida (no en mantenimiento)
+        // Simulate that a valid room is found (not under maintenance)
         Room room = new Room();
         room.status = RoomStatus.AVAILABLE;
         when(roomRepository.getRoomById(newReservation.room_id)).thenReturn(Optional.of(room));
 
-        // Simulamos que no se encuentra el cliente para el usuario
+        // Simulate that the client for the user is not found
         when(clientRepository.getClientByUserId(user.id)).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -368,6 +416,9 @@ public class ReservationUseCaseTest {
         verify(clientRepository).getClientByUserId(user.id);
     }
 
+    /**
+     * Tests that calculateTotal() returns -1 when the start date is null.
+     */
     @Test
     public void calculateTotal_startDateNull_returnsMinusOne() {
         // Arrange
@@ -379,6 +430,9 @@ public class ReservationUseCaseTest {
         assertEquals(BigDecimal.valueOf(-1.0), result);
     }
 
+    /**
+     * Tests that calculateTotal() returns -1 when the end date is null.
+     */
     @Test
     public void calculateTotal_endDateNull_returnsMinusOne() {
         // Arrange
@@ -390,10 +444,13 @@ public class ReservationUseCaseTest {
         assertEquals(BigDecimal.valueOf(-1.0), result);
     }
 
+    /**
+     * Tests that calculateTotal() returns -1 when the end date is before the start date.
+     */
     @Test
     public void calculateTotal_endDateBeforeStartDate_returnsMinusOne() {
         // Arrange
-        // Configuramos startDate como hoy y endDate como ayer
+        // Set startDate as today and endDate as yesterday
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
         Date startDate = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -405,6 +462,9 @@ public class ReservationUseCaseTest {
         assertEquals(BigDecimal.valueOf(-1.0), result);
     }
 
+    /**
+     * Tests that calculateTotal() returns -1 when the check-in and check-out dates are the same.
+     */
     @Test
     public void calculateTotal_sameDay_returnsMinusOne() {
         // Arrange
@@ -418,6 +478,9 @@ public class ReservationUseCaseTest {
         assertEquals(BigDecimal.valueOf(-1.0), result);
     }
 
+    /**
+     * Tests that calculateTotal() returns -1 when the room's price per night is zero or not positive.
+     */
     @Test
     public void calculateTotal_roomPriceZero_returnsMinusOne() {
         // Arrange
@@ -428,7 +491,7 @@ public class ReservationUseCaseTest {
         long roomId = 1L;
 
         Room room = new Room();
-        room.price_per_night = BigDecimal.ZERO; // Precio no positivo
+        room.price_per_night = BigDecimal.ZERO; // Non-positive price
         when(roomRepository.getRoomById(roomId)).thenReturn(Optional.of(room));
 
         // Act & Assert
@@ -436,6 +499,9 @@ public class ReservationUseCaseTest {
         assertEquals(BigDecimal.valueOf(-1.0), result);
     }
 
+    /**
+     * Tests that calculateTotal() returns -1 when the room is not found.
+     */
     @Test
     public void calculateTotal_roomNotFound_returnsMinusOne() {
         // Arrange
@@ -452,11 +518,14 @@ public class ReservationUseCaseTest {
         assertEquals(BigDecimal.valueOf(-1.0), result);
     }
 
+    /**
+     * Tests that calculateTotal() returns the room's price per night when the reservation is for one night.
+     */
     @Test
     public void calculateTotal_oneNight_returnsPricePerNight() {
         // Arrange
         LocalDate checkIn = LocalDate.of(2023, 3, 1);
-        LocalDate checkOut = checkIn.plusDays(1); // 1 noche
+        LocalDate checkOut = checkIn.plusDays(1); // 1 night
         Date startDate = Date.from(checkIn.atStartOfDay(ZoneId.systemDefault()).toInstant());
         Date endDate = Date.from(checkOut.atStartOfDay(ZoneId.systemDefault()).toInstant());
         long roomId = 1L;
@@ -470,10 +539,13 @@ public class ReservationUseCaseTest {
         assertEquals(new BigDecimal("100.00"), result);
     }
 
+    /**
+     * Tests that calculateTotal() returns the correct total price for a reservation spanning multiple nights.
+     */
     @Test
     public void calculateTotal_multipleNights_returnsTotalPrice() {
         // Arrange
-        // Ejemplo: checkIn = 2023-03-01, checkOut = 2023-03-05 → 4 noches
+        // Example: checkIn = 2023-03-01, checkOut = 2023-03-05 → 4 nights
         LocalDate checkIn = LocalDate.of(2023, 3, 1);
         LocalDate checkOut = checkIn.plusDays(4);
         Date startDate = Date.from(checkIn.atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -486,10 +558,13 @@ public class ReservationUseCaseTest {
 
         // Act & Assert
         BigDecimal result = reservationUseCase.calculateTotal(startDate, endDate, roomId);
-        // 4 noches * 150.00 = 600.00
+        // 4 nights * 150.00 = 600.00
         assertEquals(new BigDecimal("600.00"), result);
     }
 
+    /**
+     * Tests that updateReservation() throws an exception when the reservation is not found.
+     */
     @Test
     public void updateReservation_reservationNotFound_throwsException() {
         // Arrange
@@ -506,15 +581,18 @@ public class ReservationUseCaseTest {
         assertEquals("La reserva no existe", ex.getMessage());
     }
 
+    /**
+     * Tests that updateReservation() throws an exception when the client is not found for a client making the update.
+     */
     @Test
     public void updateReservation_clientNotFound_throwsException() {
         // Arrange
         long id = 1L;
         Reservation reservation = new Reservation();
-        reservation.client_id = 10L; // reserva asociada a cliente id 10
+        reservation.client_id = 10L; // Reservation associated with client id 10
         reservation.status = ReservationStatus.PENDING;
         Reservation updatedReservation = new Reservation();
-        // Se deben indicar fechas para evitar el chequeo de fechas
+        // Dates must be provided to avoid date check failures
         updatedReservation.start_date = new Date(1000L);
         updatedReservation.end_date = new Date(2000L);
 
@@ -532,12 +610,15 @@ public class ReservationUseCaseTest {
         assertEquals("Cliente no encontrado para validar la autorización", ex.getMessage());
     }
 
+    /**
+     * Tests that updateReservation() throws an AccessDeniedException when a client attempts to update a reservation that does not belong to them.
+     */
     @Test
     public void updateReservation_unauthorizedClient_throwsAccessDeniedException() {
         // Arrange
         long id = 1L;
         Reservation reservation = new Reservation();
-        reservation.client_id = 10L; // reserva pertenece a cliente 10
+        reservation.client_id = 10L; // Reservation belongs to client 10
         reservation.status = ReservationStatus.PENDING;
         Reservation updatedReservation = new Reservation();
         updatedReservation.start_date = new Date(1000L);
@@ -547,7 +628,7 @@ public class ReservationUseCaseTest {
         user.id = 5L;
         user.role = Role.CLIENT;
         Client client = new Client();
-        client.id = 5L; // cliente obtenido del repositorio
+        client.id = 5L; // Client obtained from repository
 
         when(reservationRepository.getReservationById(id)).thenReturn(Optional.of(reservation));
         when(clientRepository.getClientByUserId(user.id)).thenReturn(Optional.of(client));
@@ -559,13 +640,16 @@ public class ReservationUseCaseTest {
         assertEquals("No autorizado", ex.getMessage());
     }
 
+    /**
+     * Tests that updateReservation() throws an exception when a client attempts to update a reservation that is not in a pending state.
+     */
     @Test
     public void updateReservation_clientNonPendingReservation_throwsException() {
         // Arrange
         long id = 1L;
         Reservation reservation = new Reservation();
         reservation.client_id = 10L;
-        reservation.status = ReservationStatus.CONFIRMED; // no es PENDING
+        reservation.status = ReservationStatus.CONFIRMED; // Not pending
         Reservation updatedReservation = new Reservation();
         updatedReservation.start_date = new Date(1000L);
         updatedReservation.end_date = new Date(2000L);
@@ -583,9 +667,14 @@ public class ReservationUseCaseTest {
         Exception ex = assertThrows(RuntimeException.class, () ->
                 reservationUseCase.updateReservation(id, updatedReservation, user)
         );
-        assertEquals("No se pueden modificar reservas canceladas o confirmadas si eres cliente.", ex.getMessage());
+        assertEquals("No se pueden modificar reservas canceladas o confirmadas si eres cliente.",
+                ex.getMessage());
     }
 
+    /**
+     * Tests that updateReservation() throws an exception when the updated reservation is missing the start and end
+     * dates.
+     */
     @Test
     public void updateReservation_missingDates_throwsException() {
         // Arrange
@@ -594,7 +683,7 @@ public class ReservationUseCaseTest {
         reservation.client_id = 10L;
         reservation.status = ReservationStatus.PENDING;
         Reservation updatedReservation = new Reservation();
-        // No se establecen start_date ni end_date
+        // start_date and end_date are not set
 
         User user = new User();
         user.id = 10L;
@@ -612,6 +701,9 @@ public class ReservationUseCaseTest {
         assertEquals("Hay que indicar las fechas de inicio y salida de la reserva", ex.getMessage());
     }
 
+    /**
+     * Tests that updateReservation() throws an exception when the total price calculation returns an invalid value.
+     */
     @Test
     public void updateReservation_invalidTotalPrice_throwsException() {
         // Arrange
@@ -623,7 +715,7 @@ public class ReservationUseCaseTest {
         Reservation updatedReservation = new Reservation();
         updatedReservation.start_date = new Date(1000L);
         updatedReservation.end_date = new Date(2000L);
-        // Si updatedReservation.room_id es null, se mantiene el anterior (2L)
+        // If updatedReservation.room_id is null, the previous one (2L) is kept
 
         User user = new User();
         user.id = 10L;
@@ -633,7 +725,7 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.getReservationById(id)).thenReturn(Optional.of(reservation));
         when(clientRepository.getClientByUserId(user.id)).thenReturn(Optional.of(client));
-        // Stub del método calculateTotal en el spy
+        // Stub calculateTotal in the spy
         when(reservationUseCase.calculateTotal(updatedReservation.start_date, updatedReservation.end_date,
                 reservation.room_id)).thenReturn(BigDecimal.valueOf(-1.0));
 
@@ -644,6 +736,10 @@ public class ReservationUseCaseTest {
         assertEquals("Fechas de inicio y salida de la reserva erróneas.", ex.getMessage());
     }
 
+    /**
+     * Tests that a client successfully updates a reservation, and that the reservation's details are updated
+     * accordingly.
+     */
     @Test
     public void updateReservation_success_client() {
         // Arrange
@@ -652,7 +748,7 @@ public class ReservationUseCaseTest {
         reservation.client_id = 10L;
         reservation.status = ReservationStatus.PENDING;
         reservation.room_id = 2L;
-        // Fechas originales
+        // Original dates
         reservation.start_date = new Date(1000L);
         reservation.end_date = new Date(2000L);
 
@@ -662,9 +758,9 @@ public class ReservationUseCaseTest {
         Client client = new Client();
         client.id = 10L;
 
-        // Datos a actualizar
+        // Data to update
         Reservation updatedReservation = new Reservation();
-        updatedReservation.room_id = 3L; // se cambia
+        updatedReservation.room_id = 3L; // changed
         Date newStart = new Date(3000L);
         Date newEnd = new Date(4000L);
         updatedReservation.start_date = newStart;
@@ -672,7 +768,7 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.getReservationById(id)).thenReturn(Optional.of(reservation));
         when(clientRepository.getClientByUserId(user.id)).thenReturn(Optional.of(client));
-        // Stub para calculateTotal (usando el nuevo room_id que se actualizará)
+        // Stub for calculateTotal (using the new room_id to be updated)
         when(reservationUseCase.calculateTotal(newStart, newEnd, 3L))
                 .thenReturn(new BigDecimal("500.00"));
         when(reservationRepository.updateReservation(reservation)).thenReturn(1);
@@ -688,12 +784,16 @@ public class ReservationUseCaseTest {
         verify(reservationRepository).updateReservation(reservation);
     }
 
+    /**
+     * Tests that an admin successfully updates a reservation, with the updated dates applied while preserving
+     * the room ID.
+     */
     @Test
     public void updateReservation_success_admin() {
         // Arrange
         long id = 1L;
         Reservation reservation = new Reservation();
-        // Para un ADMIN, no se valida el cliente; solo se requiere que la reserva exista.
+        // For ADMIN, no client validation is required; only the reservation must exist.
         reservation.status = ReservationStatus.PENDING;
         reservation.room_id = 2L;
         reservation.start_date = new Date(1000L);
@@ -704,15 +804,15 @@ public class ReservationUseCaseTest {
         user.role = Role.ADMIN;
 
         Reservation updatedReservation = new Reservation();
-        // Actualizamos solo las fechas (no se actualiza room_id porque es null)
+        // Update only the dates (room_id remains null, so the previous value is kept)
         Date newStart = new Date(3000L);
         Date newEnd = new Date(4000L);
         updatedReservation.start_date = newStart;
         updatedReservation.end_date = newEnd;
-        // updatedReservation.room_id se deja nulo, por lo que se mantiene el valor anterior (2L)
+        // updatedReservation.room_id is left null
 
         when(reservationRepository.getReservationById(id)).thenReturn(Optional.of(reservation));
-        // Para ADMIN, no se llama a clientRepository
+        // For ADMIN, clientRepository is not called
         when(reservationUseCase.calculateTotal(newStart, newEnd, reservation.room_id))
                 .thenReturn(new BigDecimal("300.00"));
         when(reservationRepository.updateReservation(reservation)).thenReturn(1);
@@ -720,7 +820,7 @@ public class ReservationUseCaseTest {
         // Act & Assert
         int updatedRows = reservationUseCase.updateReservation(id, updatedReservation, user);
         assertEquals(1, updatedRows);
-        // La habitación permanece igual
+        // Room remains the same
         assertEquals(2L, reservation.room_id);
         assertEquals(newStart, reservation.start_date);
         assertEquals(newEnd, reservation.end_date);
@@ -729,6 +829,9 @@ public class ReservationUseCaseTest {
         verify(reservationRepository).updateReservation(reservation);
     }
 
+    /**
+     * Tests that cancelReservation() successfully cancels a pending reservation and updates its status to CANCELED.
+     */
     @Test
     public void cancelReservation_success() {
         // Arrange
@@ -747,6 +850,9 @@ public class ReservationUseCaseTest {
         assertEquals(ReservationStatus.CANCELED, reservation.status);
     }
 
+    /**
+     * Tests that cancelReservation() throws an exception when the reservation to be canceled is not found.
+     */
     @Test
     public void cancelReservation_failure_reservationNotFound_shouldThrowException() {
         // Arrange
@@ -754,14 +860,17 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.getReservationById(reservationId)).thenReturn(Optional.empty());
 
-        // Act && Assert
+        // Act & Assert
         Exception exception = assertThrows(RuntimeException.class, () ->
-            reservationUseCase.cancelReservation(reservationId)
+                reservationUseCase.cancelReservation(reservationId)
         );
         assertNotNull(exception);
         assertEquals("La reserva no existe", exception.getMessage());
     }
 
+    /**
+     * Tests that cancelReservation() throws an exception when attempting to cancel a confirmed reservation.
+     */
     @Test
     public void cancelReservation_failure_canNotCancelledConfirmedReservation_shouldThrowException() {
         // Arrange
@@ -771,7 +880,7 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.getReservationById(reservationId)).thenReturn(Optional.of(reservation));
 
-        // Act && Assert
+        // Act & Assert
         Exception exception = assertThrows(RuntimeException.class, () ->
                 reservationUseCase.cancelReservation(reservationId)
         );
@@ -779,6 +888,9 @@ public class ReservationUseCaseTest {
         assertEquals("No se puede cancelar una reserva confirmada.", exception.getMessage());
     }
 
+    /**
+     * Tests that createPayment() throws an exception when the reservation for the payment is not found.
+     */
     @Test
     public void createPayment_reservationNotFound_throwsException() {
         // Arrange
@@ -796,6 +908,10 @@ public class ReservationUseCaseTest {
         verify(reservationRepository).getReservationById(reservationId);
     }
 
+    /**
+     * Tests that createPayment() throws an AccessDeniedException when the client is not authorized to make a payment
+     * for the reservation.
+     */
     @Test
     public void createPayment_clientNotAuthorized_throwsException() {
         // Arrange
@@ -809,7 +925,7 @@ public class ReservationUseCaseTest {
         user.role = Role.CLIENT;
 
         Reservation reservation = new Reservation();
-        reservation.client_id = 20L;  // No coincide con user.id
+        reservation.client_id = 20L;  // Does not match user.id
         reservation.total_price = new BigDecimal("200.00");
         reservation.status = ReservationStatus.PENDING;
 
@@ -822,6 +938,9 @@ public class ReservationUseCaseTest {
         assertEquals("No autorizado", ex.getMessage());
     }
 
+    /**
+     * Tests that createPayment() throws an exception when attempting to make a payment for a canceled reservation.
+     */
     @Test
     public void createPayment_reservationCanceled_throwsException() {
         // Arrange
@@ -831,7 +950,7 @@ public class ReservationUseCaseTest {
         newPayment.amount = new BigDecimal("50.00");
 
         User user = new User();
-        user.role = Role.ADMIN; // Rol ADMIN, para evitar validación de cliente
+        user.role = Role.ADMIN; // ADMIN role to avoid client validation
 
         Reservation reservation = new Reservation();
         reservation.total_price = new BigDecimal("200.00");
@@ -839,20 +958,24 @@ public class ReservationUseCaseTest {
 
         when(reservationRepository.getReservationById(reservationId)).thenReturn(Optional.of(reservation));
 
-        // Act && Assert
+        // Act & Assert
         Exception ex = assertThrows(RuntimeException.class, () ->
                 reservationUseCase.createPayment(newPayment, reservationId, user)
         );
         assertEquals("No se pueden registrar pagos para reservas canceladas", ex.getMessage());
     }
 
+    /**
+     * Tests that createPayment() throws an exception when the payment amount exceeds the remaining balance
+     * for a confirmed reservation.
+     */
     @Test
     public void createPayment_amountExceedsRemainingAndConfirmed_throwsException() {
         // Arrange
         long reservationId = 1L;
 
         Payment newPayment = new Payment();
-        newPayment.amount = new BigDecimal("60.00");  // Excede lo pendiente
+        newPayment.amount = new BigDecimal("60.00");  // Exceeds the remaining amount
 
         User user = new User();
         user.role = Role.ADMIN;
@@ -862,7 +985,7 @@ public class ReservationUseCaseTest {
         reservation.status = ReservationStatus.CONFIRMED;
 
         when(reservationRepository.getReservationById(reservationId)).thenReturn(Optional.of(reservation));
-        // Supongamos que ya se han pagado 150, entonces remaining = 50
+        // Assume that 150 has already been paid, so remaining = 50
         when(paymentRepository.getTotalPaid(reservationId)).thenReturn(new BigDecimal("150.00"));
 
         // Act & Assert
@@ -872,6 +995,10 @@ public class ReservationUseCaseTest {
         assertEquals("El pago no se ha realizado ya que la reserva ya esta pagada y confirmada", ex.getMessage());
     }
 
+    /**
+     * Tests that createPayment() throws an exception when the payment amount exceeds the remaining balance for a
+     * pending reservation.
+     */
     @Test
     public void createPayment_amountExceedsRemaining_pending_throwsException() {
         // Arrange
@@ -888,7 +1015,7 @@ public class ReservationUseCaseTest {
         reservation.status = ReservationStatus.PENDING;
 
         when(reservationRepository.getReservationById(reservationId)).thenReturn(Optional.of(reservation));
-        // Supongamos que ya se han pagado 150, remaining = 50.
+        // Assume that 150 has already been paid, remaining = 50.
         when(paymentRepository.getTotalPaid(reservationId)).thenReturn(new BigDecimal("150.00"));
 
         // Act & Assert
@@ -898,13 +1025,17 @@ public class ReservationUseCaseTest {
         assertEquals("El pago excede el monto pendiente", ex.getMessage());
     }
 
+    /**
+     * Tests that createPayment() successfully processes an exact payment that fulfills the reservation's total price,
+     * and updates the reservation status to CONFIRMED.
+     */
     @Test
     public void createPayment_success_exactPayment_updatesReservationToConfirmed() {
         // Arrange
         long reservationId = 1L;
 
         Payment newPayment = new Payment();
-        newPayment.amount = new BigDecimal("50.00"); // Exactamente el restante
+        newPayment.amount = new BigDecimal("50.00"); // Exactly the remaining amount
 
         User user = new User();
         user.id = 10L;
@@ -916,23 +1047,26 @@ public class ReservationUseCaseTest {
         reservation.client_id = 10L;
 
         when(reservationRepository.getReservationById(reservationId)).thenReturn(Optional.of(reservation));
-        // Para este caso, se supone que ya se han pagado 150.
+        // For this case, assume that 150 has already been paid.
         when(paymentRepository.getTotalPaid(reservationId)).thenReturn(new BigDecimal("150.00"));
-        // Simular creación del pago
+        // Simulate payment creation
         when(paymentRepository.createPayment(newPayment)).thenReturn(7L);
 
         // Act & Assert
         long savedPaymentId = reservationUseCase.createPayment(newPayment, reservationId, user);
         assertEquals(7L, savedPaymentId);
-        // Verificar que se asigna la fecha y el reservationId al pago
+        // Verify that the payment's date and reservationId are set
         assertNotNull(newPayment.payment_date);
         assertEquals(reservationId, newPayment.reservation_id);
-        // Como 150+50 = 200, se actualiza el estado a CONFIRMED
+        // Since 150 + 50 = 200, the status is updated to CONFIRMED
         assertEquals(ReservationStatus.CONFIRMED, reservation.status);
         verify(paymentRepository).createPayment(newPayment);
         verify(reservationRepository).updateReservation(reservation);
     }
 
+    /**
+     * Tests that createPayment() processes a partial payment and does not update the reservation status.
+     */
     @Test
     public void createPayment_success_partialPayment_doesNotUpdateReservationStatus() {
         // Arrange
@@ -951,7 +1085,7 @@ public class ReservationUseCaseTest {
         reservation.client_id = 10L;
 
         when(reservationRepository.getReservationById(reservationId)).thenReturn(Optional.of(reservation));
-        // Supongamos que ya se han pagado 100, remaining = 100 y 50 < 100.
+        // Assume that 100 has already been paid, so remaining = 100 and 50 < 100.
         when(paymentRepository.getTotalPaid(reservationId)).thenReturn(new BigDecimal("100.00"));
         when(paymentRepository.createPayment(newPayment)).thenReturn(7L);
 
@@ -959,16 +1093,19 @@ public class ReservationUseCaseTest {
         long savedPaymentId = reservationUseCase.createPayment(newPayment, reservationId, user);
 
         assertEquals(7L, savedPaymentId);
-        // La reserva permanece en estado PENDING
+        // Reservation remains in PENDING status
         assertEquals(ReservationStatus.PENDING, reservation.status);
 
         verify(paymentRepository).createPayment(newPayment);
         verify(reservationRepository, never()).updateReservation(any());
     }
 
+    /**
+     * Tests that getPaymentsByClient() returns the correct list of payments for the given client ID.
+     */
     @Test
     public void getPaymentsByClient_success() {
-        // Arrange: Creamos una lista de pagos, simulamos su retorno para el clientId creado
+        // Arrange: Create a list of payments and simulate its return for the given client ID
         long clientId = 5L;
         List<Payment> paymentList = new ArrayList<>();
         Payment payment = new Payment();

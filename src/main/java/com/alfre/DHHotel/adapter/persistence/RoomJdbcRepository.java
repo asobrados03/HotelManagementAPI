@@ -17,6 +17,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This class contains the attributes and methods of the room repository in the adapter layer that access to the
+ * database of the API and performs the operations relation to rooms
+ *
+ * @author Alfredo Sobrados González
+ */
 @Repository
 public class RoomJdbcRepository implements RoomRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -24,6 +30,17 @@ public class RoomJdbcRepository implements RoomRepository {
     private final RoomMapper mapper = new RoomMapper();
     private final String table = "Room";
 
+    /**
+     * Constructs a new RoomJdbcRepository with the specified JDBC template and data source.
+     *
+     * <p>This repository uses the provided {@link NamedParameterJdbcTemplate} for executing SQL queries
+     * with named parameters, and initializes a {@link SimpleJdbcInsert} to handle insertion operations
+     * into the configured table. The insert operation is set up to automatically retrieve generated keys,
+     * specifically the "id" column.</p>
+     *
+     * @param namedParameterJdbcTemplate the JDBC template used for executing SQL queries with named parameters
+     * @param dataSource the data source from which database connections are obtained
+     */
     public RoomJdbcRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate, DataSource dataSource) {
         this.jdbcTemplate = namedParameterJdbcTemplate;
         this.insert = new SimpleJdbcInsert(dataSource)
@@ -43,7 +60,7 @@ public class RoomJdbcRepository implements RoomRepository {
     }
 
     /**
-     * Retrieves a room by its ID.
+     * Retrieves a room by its ID from database.
      *
      * @param id The ID of the room to retrieve
      * @return Optional containing the room if found, empty otherwise
@@ -108,7 +125,7 @@ public class RoomJdbcRepository implements RoomRepository {
     }
 
     /**
-     * Retrieves rooms by their type.
+     * Retrieves rooms by their type from database.
      *
      * @param type The type of rooms to retrieve
      * @return List of rooms of the specified type
@@ -121,7 +138,7 @@ public class RoomJdbcRepository implements RoomRepository {
     }
 
     /**
-     * Retrieves available rooms (rooms with state AVAILABLE).
+     * Retrieves available rooms (rooms with state AVAILABLE) from database.
      *
      * @return List of available rooms
      */
@@ -132,6 +149,13 @@ public class RoomJdbcRepository implements RoomRepository {
         return jdbcTemplate.query(sql, params, mapper);
     }
 
+    /**
+     * Update the status of a single room in the database.
+     *
+     * @param id Room ID for which we are going to update the status
+     * @param status value of room status to update
+     * @return Number of rows affected after the update
+     */
     @Override
     public int updateStatus(long id, RoomStatus status) {
         String sql = "UPDATE " + table + " SET status = :status WHERE id = :id";
@@ -141,19 +165,43 @@ public class RoomJdbcRepository implements RoomRepository {
         return jdbcTemplate.update(sql, params);
     }
 
+    /**
+     * Retrieves in maintenance rooms (rooms with state MAINTENANCE) from database.
+     *
+     * @return List of in maintenance rooms
+     */
     @Override
     public List<Room> getRoomsInMaintenance() {
         String sql = "SELECT * FROM " + table + " WHERE status = 'MAINTENANCE'";
         return jdbcTemplate.query(sql, mapper);
     }
 
+    /**
+     * Delete all rooms in the database
+     */
     @Override
     public void deleteAll() {
         String sql = "DELETE FROM " + table;
         jdbcTemplate.update(sql, new MapSqlParameterSource());
     }
 
+    /**
+     * A RowMapper implementation for mapping rows of a SQL ResultSet to Room objects.
+     *
+     * <p>This mapper converts each row from the ResultSet into a Room instance by extracting
+     * the room's id, room number, type, price per night, and status. The type and status
+     * values are normalized to uppercase and then converted to their respective enum types
+     * ({@link RoomType} and {@link RoomStatus}).</p>
+     */
     public static class RoomMapper implements RowMapper<Room> {
+        /**
+         * Maps the current row of the given ResultSet to a Room object.
+         *
+         * @param rs     the {@code ResultSet} to map (pre-initialized for the current row)
+         * @param rowNum the number of the current row
+         * @return a Room instance representing the data in the current row
+         * @throws SQLException if a SQL exception occurs while processing the ResultSet
+         */
         @Override
         public Room mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new Room(

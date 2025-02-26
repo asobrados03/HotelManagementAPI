@@ -29,6 +29,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * This class contains the attributes and methods for realize the integration tests
+ * of the customers operations.
+ *
+ * @author Alfredo Sobrados González
+ */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -60,6 +66,14 @@ public class CustomerOperationsIntegrationTests {
         mariaDB.start();
     }
 
+    /**
+     * Configures dynamic properties for database connection using the MariaDB TestContainers container.
+     * <p>
+     * This method registers the URL, username, and password obtained from the MariaDB container in the
+     * {@link DynamicPropertyRegistry}, so that Spring Boot correctly configures the data source in the test context.
+     * </p>
+     * @param registry the dynamic property record where the database connection properties are added
+     */
     @DynamicPropertySource
     public static void databaseProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", mariaDB::getJdbcUrl);
@@ -67,6 +81,13 @@ public class CustomerOperationsIntegrationTests {
         registry.add("spring.datasource.password", mariaDB::getPassword);
     }
 
+    /**
+     * Performs initial setup before all tests.
+     * <p>
+     * This method deletes all existing users, creates a default admin user and client user,
+     * generates their JWT tokens, and creates a client record for the client user.
+     * </p>
+     */
     @BeforeAll
     public void setup() {
         userRepository.getAllUsers().forEach(u -> userRepository.deleteUser(u.id));
@@ -79,6 +100,13 @@ public class CustomerOperationsIntegrationTests {
         createClient(clientUser.id, "Test", "Client", "+34123456789");
     }
 
+    /**
+     * Creates and persists a new user with the specified email and role.
+     *
+     * @param email the email address for the new user
+     * @param role the role to assign to the new user
+     * @return the created User instance with its generated id
+     */
     private User createUser(String email, Role role) {
         User user = new User();
         user.setEmail(email);
@@ -88,6 +116,14 @@ public class CustomerOperationsIntegrationTests {
         return user;
     }
 
+    /**
+     * Creates and persists a new client record associated with the given user id.
+     *
+     * @param userId    the id of the user to associate with the client record
+     * @param firstName the first name of the client
+     * @param lastName  the last name of the client
+     * @param phone     the phone number of the client
+     */
     private void createClient(long userId, String firstName, String lastName, String phone) {
         Client client = new Client();
         client.setUser_id(userId);
@@ -98,6 +134,14 @@ public class CustomerOperationsIntegrationTests {
         client.setId(id);
     }
 
+    /**
+     * Resets test data before each test.
+     * <p>
+     * This method deletes all client records and removes any user (except the default admin
+     * and client users). If the default client user does not exist, it recreates the client user
+     * and its associated client record.
+     * </p>
+     */
     @BeforeEach
     public void resetData() {
         clientRepository.deleteAll();
@@ -111,14 +155,23 @@ public class CustomerOperationsIntegrationTests {
         }
     }
 
+    /**
+     * Tests that retrieving all clients returns a successful response when clients exist.
+     * <p>
+     * This test creates an additional client for the default client user and verifies that a GET request
+     * to "/api/admin/clients" returns an array containing the expected client(s).
+     * </p>
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void testGetAllClients_Success() throws Exception {
-        // Preparar
+        // Prepare: Retrieve the default client user and add an extra client record.
         User clientUser = userRepository.getUserByEmail("client@test.com")
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado con email client@test.com"));
+                .orElseThrow(() -> new RuntimeException("Client not found with email client@test.com"));
         createClient(clientUser.id, "Client1", "Last1", "+34111111111");
 
-        // Ejecutar y Verificar
+        // Execute and verify
         mockMvc.perform(get("/api/admin/clients")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
@@ -126,31 +179,54 @@ public class CustomerOperationsIntegrationTests {
                 .andExpect(jsonPath("$.length()").value(1));
     }
 
+    /**
+     * Tests that retrieving all clients when no client records exist returns a Not Found status.
+     * <p>
+     * This test verifies that a GET request to "/api/admin/clients" returns a 404 status and an error
+     * message when no clients are registered.
+     * </p>
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void testGetAllClients_EmptyList_ReturnsNotFound() throws Exception {
-        // Ejecutar y Verificar
+        // Execute and verify
         mockMvc.perform(get("/api/admin/clients")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$").value("No hay clientes registrados en el sistema."));
     }
 
+    /**
+     * Tests that accessing the get-all-clients endpoint without authentication returns Forbidden.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void testGetAllClients_WithoutAuth_ReturnsForbidden() throws Exception {
-        // Ejecutar y Verificar
+        // Execute and verify
         mockMvc.perform(get("/api/admin/clients"))
                 .andExpect(status().isForbidden());
     }
 
+    /**
+     * Tests that retrieving a client by its id returns the correct client details.
+     * <p>
+     * This test creates a new client, retrieves it, and verifies that the GET request to
+     * "/api/admin/client/{id}" returns the expected user id, first name, last name, and phone number.
+     * </p>
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void testGetClientById_Success() throws Exception {
-        // Preparar
+        // Prepare: Create a new client user and associated client record.
         User user = createUser("email@test.com", Role.CLIENT);
         createClient(user.id, "New", "Client", "+34 654 123 456");
         Client client = clientRepository.getClientByUserId(user.id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        // Ejecutar y Verificar
+        // Execute and verify
         mockMvc.perform(get("/api/admin/client/" + client.id)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
@@ -160,56 +236,85 @@ public class CustomerOperationsIntegrationTests {
                 .andExpect(jsonPath("$.phone").value("+34 654 123 456"));
     }
 
+    /**
+     * Tests that retrieving a client by an invalid id returns a Not Found error.
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void testGetClientById_NotFound_ReturnsError() throws Exception {
-        // Ejecutar y Verificar
+        // Execute and verify
         mockMvc.perform(get("/api/admin/client/999")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$").value("El cliente solicitado no existe"));
     }
 
+    /**
+     * Tests that deleting a client successfully removes the client and its associated user record.
+     * <p>
+     * This test creates a new client, sends a DELETE request to remove it, and verifies that both the
+     * client record and the corresponding user record are deleted.
+     * </p>
+     *
+     * @throws Exception if an error occurs during the deletion process
+     */
     @Test
     public void testDeleteClient_Success() throws Exception {
-        // Preparar
+        // Prepare: Create a new client user and associated client record.
         User newUser = createUser("newclient@test.com", Role.CLIENT);
         createClient(newUser.id, "New", "Client", "+34222222222");
 
         Client newClient = clientRepository.getClientByUserId(newUser.id)
-                .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Client not found"));
 
-        // Ejecutar y Verificar
+        // Execute and verify the DELETE request
         mockMvc.perform(delete("/api/admin/client/" + newClient.id)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Cliente con id: " + newClient.id + "eliminado correctamente."));
 
+        // Verify deletion in the repository
         assertThat(clientRepository.getClientById(newClient.id)).isEmpty();
         assertThat(userRepository.getUserById(newUser.id)).isEmpty();
     }
 
+    /**
+     * Tests that attempting to delete a non-existent client returns a Not Found error.
+     *
+     * @throws Exception if an error occurs during the deletion process
+     */
     @Test
     public void testDeleteClient_NotFound_ReturnsError() throws Exception {
-        // Ejecutar y Verificar
+        // Execute and verify
         mockMvc.perform(delete("/api/admin/client/999")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("No existe el cliente que quieres eliminar"));
     }
 
+    /**
+     * Tests that admin-restricted endpoints return Forbidden when accessed with a client role.
+     * <p>
+     * This test verifies that a user with a client role cannot access endpoints reserved for admin users,
+     * such as retrieving all clients, fetching a client by id, or deleting a client.
+     * </p>
+     *
+     * @throws Exception if an error occurs during the request
+     */
     @Test
     public void testClientEndpoints_WithClientRole_ReturnsForbidden() throws Exception {
-        // Ejecutar y Verificar
+        // Execute and verify GET request for all clients
         mockMvc.perform(get("/api/admin/clients")
                         .header("Authorization", "Bearer " + clientToken))
                 .andExpect(status().isForbidden());
 
-        // Ejecutar y Verificar
+        // Execute and verify GET request for a specific client
         mockMvc.perform(get("/api/admin/client/1")
                         .header("Authorization", "Bearer " + clientToken))
                 .andExpect(status().isForbidden());
 
-        // Ejecutar y Verificar
+        // Execute and verify DELETE request for a client
         mockMvc.perform(delete("/api/admin/client/1")
                         .header("Authorization", "Bearer " + clientToken))
                 .andExpect(status().isForbidden());

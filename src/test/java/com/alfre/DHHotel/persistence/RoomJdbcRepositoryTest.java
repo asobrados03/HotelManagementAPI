@@ -27,6 +27,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.test.util.ReflectionTestUtils;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the rooms management operations JDBC repository implementation.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class RoomJdbcRepositoryTest {
 
@@ -39,18 +45,24 @@ public class RoomJdbcRepositoryTest {
     @Mock
     private SimpleJdbcInsert insert;
 
-    // Construimos manualmente el repositorio para inyectar los mocks
     private RoomJdbcRepository roomRepository;
     private final String table = "Room";
 
+    /**
+     * Sets up the RoomJdbcRepository by injecting jdbcTemplate and dataSource into its constructor,
+     * and replaces the internal SimpleJdbcInsert instance with the provided mock.
+     */
     @BeforeEach
     void setup() {
-        // Inyectamos jdbcTemplate y dataSource en el constructor
+        // Inject jdbcTemplate and dataSource into the constructor
         roomRepository = new RoomJdbcRepository(jdbcTemplate, dataSource);
-        // Reemplazamos la instancia interna de SimpleJdbcInsert por nuestro mock
+        // Replace the internal SimpleJdbcInsert instance with our mock
         ReflectionTestUtils.setField(roomRepository, "insert", insert);
     }
 
+    /**
+     * Tests that getAllRooms() returns all rooms as expected.
+     */
     @Test
     void testGetAllRooms() {
         // Arrange
@@ -67,11 +79,14 @@ public class RoomJdbcRepositoryTest {
         List<Room> result = roomRepository.getAllRooms();
 
         // Assert
-        assertNotNull(result, "La lista de habitaciones no debe ser nula");
-        assertEquals(2, result.size(), "Debe retornar 2 habitaciones");
-        assertEquals(room1, result.getFirst(), "La primera habitación debe coincidir");
+        assertNotNull(result, "The list of rooms should not be null");
+        assertEquals(2, result.size(), "Should return 2 rooms");
+        assertEquals(room1, result.getFirst(), "The first room should match the expected one");
     }
 
+    /**
+     * Tests that getRoomById() returns the expected room when found.
+     */
     @Test
     void testGetRoomById_found() {
         // Arrange
@@ -88,15 +103,17 @@ public class RoomJdbcRepositoryTest {
         Optional<Room> result = roomRepository.getRoomById(id);
 
         // Assert
-        assertTrue(result.isPresent(), "La habitación debe existir");
-        assertEquals(room, result.get(), "La habitación retornada debe coincidir");
+        assertTrue(result.isPresent(), "The room should exist");
+        assertEquals(room, result.get(), "The returned room should match the expected one");
     }
 
+    /**
+     * Tests that getRoomById() returns an empty Optional when the room is not found.
+     */
     @Test
     void testGetRoomById_notFound() {
         // Arrange
         long id = 999L;
-
         String sql = "SELECT * FROM " + table + " WHERE id = :id";
 
         when(jdbcTemplate.queryForObject(eq(sql), any(MapSqlParameterSource.class),
@@ -107,9 +124,12 @@ public class RoomJdbcRepositoryTest {
         Optional<Room> result = roomRepository.getRoomById(id);
 
         // Assert
-        assertFalse(result.isPresent(), "No se debe encontrar la habitación");
+        assertFalse(result.isPresent(), "No room should be found");
     }
 
+    /**
+     * Tests that createRoom() successfully creates a new room and returns the generated ID.
+     */
     @Test
     void testCreateRoom() {
         // Arrange
@@ -122,7 +142,7 @@ public class RoomJdbcRepositoryTest {
         long generatedId = roomRepository.createRoom(newRoom);
 
         // Assert
-        assertEquals(1L, generatedId, "El ID generado debe ser 1");
+        assertEquals(1L, generatedId, "The generated ID should be 1");
 
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
 
@@ -131,13 +151,16 @@ public class RoomJdbcRepositoryTest {
         MapSqlParameterSource params = captor.getValue();
 
         assertEquals(newRoom.room_number, params.getValue("room_number"),
-                "El room_number debe coincidir");
-        assertEquals(newRoom.type.name(), params.getValue("type"), "El type debe coincidir");
+                "The room_number should match");
+        assertEquals(newRoom.type.name(), params.getValue("type"), "The type should match");
         assertEquals(newRoom.price_per_night, params.getValue("price_per_night"),
-                "El price_per_night debe coincidir");
-        assertEquals(newRoom.status.name(), params.getValue("status"), "El status debe coincidir");
+                "The price_per_night should match");
+        assertEquals(newRoom.status.name(), params.getValue("status"), "The status should match");
     }
 
+    /**
+     * Tests that updateRoom() correctly updates a room and returns the number of rows updated.
+     */
     @Test
     void testUpdateRoom() {
         // Arrange
@@ -151,7 +174,7 @@ public class RoomJdbcRepositoryTest {
         int rows = roomRepository.updateRoom(room, id);
 
         // Assert
-        assertEquals(1, rows, "Se debe actualizar 1 fila");
+        assertEquals(1, rows, "One row should be updated");
 
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
 
@@ -159,13 +182,17 @@ public class RoomJdbcRepositoryTest {
 
         MapSqlParameterSource params = captor.getValue();
 
-        assertEquals(id, params.getValue("id"), "El id debe coincidir");
-        assertEquals(room.room_number, params.getValue("room_number"), "El room_number debe coincidir");
-        assertEquals(room.type.name(), params.getValue("type"), "El type debe coincidir");
-        assertEquals(room.price_per_night, params.getValue("price_per_night"), "El price_per_night debe coincidir");
-        assertEquals(room.status.name(), params.getValue("status"), "El status debe coincidir");
+        assertEquals(id, params.getValue("id"), "The id should match");
+        assertEquals(room.room_number, params.getValue("room_number"), "The room_number should match");
+        assertEquals(room.type.name(), params.getValue("type"), "The type should match");
+        assertEquals(room.price_per_night, params.getValue("price_per_night"),
+                "The price_per_night should match");
+        assertEquals(room.status.name(), params.getValue("status"), "The status should match");
     }
 
+    /**
+     * Tests that deleteRoom() correctly deletes a room and returns the number of rows deleted.
+     */
     @Test
     void testDeleteRoom() {
         // Arrange
@@ -177,7 +204,7 @@ public class RoomJdbcRepositoryTest {
         int rows = roomRepository.deleteRoom(id);
 
         // Assert
-        assertEquals(1, rows, "Se debe eliminar 1 fila");
+        assertEquals(1, rows, "One row should be deleted");
 
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
 
@@ -185,9 +212,12 @@ public class RoomJdbcRepositoryTest {
 
         MapSqlParameterSource params = captor.getValue();
 
-        assertEquals(id, params.getValue("id"), "El id debe coincidir");
+        assertEquals(id, params.getValue("id"), "The id should match");
     }
 
+    /**
+     * Tests that getRoomsByType() returns the correct list of rooms for a given room type.
+     */
     @Test
     void testGetRoomsByType() {
         // Arrange
@@ -206,11 +236,14 @@ public class RoomJdbcRepositoryTest {
         List<Room> result = roomRepository.getRoomsByType(type);
 
         // Assert
-        assertNotNull(result, "La lista de habitaciones no debe ser nula");
-        assertEquals(2, result.size(), "Debe retornar 2 habitaciones");
-        assertEquals(room1, result.getFirst(), "La primera habitación debe coincidir");
+        assertNotNull(result, "The list of rooms should not be null");
+        assertEquals(2, result.size(), "Should return 2 rooms");
+        assertEquals(room1, result.getFirst(), "The first room should match the expected one");
     }
 
+    /**
+     * Tests that getAvailableRooms() returns the correct list of available rooms.
+     */
     @Test
     void testGetAvailableRooms() {
         // Arrange
@@ -228,16 +261,18 @@ public class RoomJdbcRepositoryTest {
         List<Room> result = roomRepository.getAvailableRooms();
 
         // Assert
-        assertNotNull(result, "La lista de habitaciones disponibles no debe ser nula");
-        assertEquals(1, result.size(), "Debe retornar 1 habitación");
-        assertEquals(room1, result.getFirst(), "La habitación debe coincidir");
+        assertNotNull(result, "The list of available rooms should not be null");
+        assertEquals(1, result.size(), "Should return 1 room");
+        assertEquals(room1, result.getFirst(), "The room should match the expected one");
     }
 
+    /**
+     * Tests that updateStatus() correctly updates the status of a room and returns the number of rows updated.
+     */
     @Test
     void testUpdateStatus() {
         // Arrange
         long id = 1L;
-
         RoomStatus newStatus = RoomStatus.OCCUPIED;
 
         String sql = "UPDATE " + table + " SET status = :status WHERE id = :id";
@@ -248,7 +283,7 @@ public class RoomJdbcRepositoryTest {
         int rows = roomRepository.updateStatus(id, newStatus);
 
         // Assert
-        assertEquals(1, rows, "Se debe actualizar 1 fila");
+        assertEquals(1, rows, "One row should be updated");
 
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
 
@@ -256,10 +291,13 @@ public class RoomJdbcRepositoryTest {
 
         MapSqlParameterSource params = captor.getValue();
 
-        assertEquals(id, params.getValue("id"), "El id debe coincidir");
-        assertEquals(newStatus.name(), params.getValue("status"), "El status debe coincidir");
+        assertEquals(id, params.getValue("id"), "The id should match");
+        assertEquals(newStatus.name(), params.getValue("status"), "The status should match");
     }
 
+    /**
+     * Tests that getRoomsInMaintenance() returns the list of rooms that are under maintenance.
+     */
     @Test
     void testGetRoomsInMaintenance() {
         // Arrange
@@ -275,8 +313,8 @@ public class RoomJdbcRepositoryTest {
         List<Room> result = roomRepository.getRoomsInMaintenance();
 
         // Assert
-        assertNotNull(result, "La lista de habitaciones en mantenimiento no debe ser nula");
-        assertEquals(1, result.size(), "Debe retornar 1 habitación");
-        assertEquals(room1, result.getFirst(), "La habitación debe coincidir");
+        assertNotNull(result, "The list of rooms in maintenance should not be null");
+        assertEquals(1, result.size(), "Should return 1 room");
+        assertEquals(room1, result.getFirst(), "The room should match the expected one");
     }
 }

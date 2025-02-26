@@ -13,15 +13,35 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * This class handles HTTP requests related to room management.
+ * It provides endpoints for retrieving, creating, updating,
+ * deleting rooms, as well as retrieving rooms by type, available rooms, and
+ * updating a room's status.
+ */
 @RestController
 @RequestMapping("/api")
 public class RoomController {
     private final RoomUseCase roomUseCase;
 
+    /**
+     * Constructs a RoomController with the provided RoomUseCase.
+     *
+     * @param roomUseCase the use case that contains the business logic for room operations
+     */
     public RoomController(RoomUseCase roomUseCase) {
         this.roomUseCase = roomUseCase;
     }
 
+    /**
+     * Retrieves all rooms in the system.
+     * <p>
+     * If no rooms are registered, a RuntimeException is thrown and a 404 Not Found
+     * response is returned.
+     * </p>
+     *
+     * @return a ResponseEntity containing the list of rooms if found, or an error message otherwise
+     */
     @GetMapping("/admin/rooms")
     public ResponseEntity<?> getAllRooms() {
         try {
@@ -36,6 +56,12 @@ public class RoomController {
         }
     }
 
+    /**
+     * Retrieves a room by its unique identifier.
+     *
+     * @param id the unique identifier of the room
+     * @return a ResponseEntity containing the room if found, or a 404 Not Found response with an error message if not found
+     */
     @GetMapping("/admin/room/{id}")
     public ResponseEntity<?> getRoomById(@PathVariable long id) {
         try {
@@ -47,6 +73,12 @@ public class RoomController {
         }
     }
 
+    /**
+     * Creates a new room.
+     *
+     * @param newRoom the Room object containing the room details to be created
+     * @return a ResponseEntity containing the generated room identifier, or a 400 Bad Request response with an error message if creation fails
+     */
     @PostMapping("/admin/room")
     public ResponseEntity<?> createRoom(@RequestBody Room newRoom) {
         try {
@@ -56,11 +88,17 @@ public class RoomController {
         }
     }
 
+    /**
+     * Updates an existing room.
+     *
+     * @param updatedRoom the Room object containing updated room information
+     * @param id the unique identifier of the room to update
+     * @return a ResponseEntity with a success message if the update is successful, or an error response if not
+     */
     @PutMapping("/admin/room/{id}")
     public ResponseEntity<String> updateRoom(@RequestBody Room updatedRoom, @PathVariable long id) {
         try {
             int rowsAffected = roomUseCase.updateRoom(updatedRoom, id);
-
             if (rowsAffected == 1) {
                 return ResponseEntity.ok("La actualización se ha hecho correctamente");
             } else {
@@ -71,11 +109,17 @@ public class RoomController {
         }
     }
 
+    /**
+     * Deletes a room by its unique identifier.
+     *
+     * @param idDeleteRoom the unique identifier of the room to be deleted
+     * @return a ResponseEntity with a success message if deletion is successful,
+     *         or an error response if deletion fails
+     */
     @DeleteMapping("admin/room/{idDeleteRoom}")
     public ResponseEntity<?> deleteRoom(@PathVariable long idDeleteRoom) {
         try {
             int rowsAffected = roomUseCase.deleteRoom(idDeleteRoom);
-
             if (rowsAffected == 1) {
                 return ResponseEntity.ok("La habitación con id: " + idDeleteRoom + " se ha eliminado correctamente");
             } else {
@@ -86,6 +130,13 @@ public class RoomController {
         }
     }
 
+    /**
+     * Retrieves rooms by type.
+     *
+     * @param type the RoomType used to filter the rooms
+     * @return a ResponseEntity containing a list of RoomDTO objects if found,
+     *         or a 404 Not Found response with an error message if none are found
+     */
     @GetMapping("/public/rooms/type/{type}")
     public ResponseEntity<?> getRoomsByType(@PathVariable RoomType type) {
         try {
@@ -100,6 +151,12 @@ public class RoomController {
         }
     }
 
+    /**
+     * Retrieves all available rooms.
+     *
+     * @return a ResponseEntity containing a list of RoomDTO objects for available rooms,
+     *         or a 404 Not Found response with an error message if none are available
+     */
     @GetMapping("/public/rooms/available")
     public ResponseEntity<?> getAvailableRooms() {
         try {
@@ -114,11 +171,18 @@ public class RoomController {
         }
     }
 
+    /**
+     * Updates the status of a room.
+     *
+     * @param id the unique identifier of the room
+     * @param status the new RoomStatus to set
+     * @return a ResponseEntity with a success message if the update is successful,
+     *         or an error response if the update fails
+     */
     @PutMapping("/admin/rooms/{id}/status/{status}")
     public ResponseEntity<?> updateStatus(@PathVariable long id, @PathVariable RoomStatus status) {
         try {
             int rowsAffected = roomUseCase.updateStatus(id, status);
-
             if (rowsAffected == 1) {
                 return ResponseEntity.ok("La actualización se ha hecho correctamente");
             } else {
@@ -129,6 +193,12 @@ public class RoomController {
         }
     }
 
+    /**
+     * Retrieves all rooms that are under maintenance.
+     *
+     * @return a ResponseEntity containing a list of rooms in maintenance,
+     *         or a 404 Not Found response with an error message if none are found
+     */
     @GetMapping("/admin/rooms/maintenance")
     public ResponseEntity<?> getRoomsInMaintenance() {
         try {

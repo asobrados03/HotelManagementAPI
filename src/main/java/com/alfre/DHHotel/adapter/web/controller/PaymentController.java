@@ -10,15 +10,34 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * This class handles HTTP requests for managing payment resources.
+ * It delegates business logic to the PaymentUseCase.
+ *
+ * @author Alfredo Sobrados González
+ */
 @RestController
 @RequestMapping("/api")
 public class PaymentController {
     private final PaymentUseCase paymentUseCase;
 
+    /**
+     * Constructs a PaymentController with the specified PaymentUseCase.
+     *
+     * @param paymentUseCase the use case containing business logic for payment operations
+     */
     public PaymentController(PaymentUseCase paymentUseCase) {
         this.paymentUseCase = paymentUseCase;
     }
 
+    /**
+     * Retrieves all payment records.
+     * <p>
+     * If no payments are found, a RuntimeException is thrown and a 404 Not Found response is returned.
+     * </p>
+     *
+     * @return a ResponseEntity containing the list of payments if found, or an error message otherwise
+     */
     @GetMapping("/admin/payments")
     public ResponseEntity<?> getAllPayments() {
         try {
@@ -34,18 +53,30 @@ public class PaymentController {
         }
     }
 
+    /**
+     * Retrieves a payment by its unique identifier.
+     *
+     * @param id the unique identifier of the payment
+     * @return a ResponseEntity containing the Payment if found, or a 404 Not Found response with an error message if not
+     */
     @GetMapping("/admin/payment/{id}")
     public ResponseEntity<?> getPaymentById(@PathVariable long id) {
         try {
             Payment response = paymentUseCase.getPaymentById(id)
-                .orElseThrow(() -> new RuntimeException("El pago solicitado no existe"));
-
+                    .orElseThrow(() -> new RuntimeException("El pago solicitado no existe"));
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
+    /**
+     * Retrieves all payments associated with a specific reservation.
+     *
+     * @param reservationId the identifier of the reservation
+     * @return a ResponseEntity containing the list of Payment objects if found,
+     *         or a 404 Not Found response with an error message if none are found
+     */
     @GetMapping("/admin/payment/reservation/id/{reservationId}")
     public ResponseEntity<?> getPaymentsByReservationId(@PathVariable long reservationId) {
         try {
@@ -61,6 +92,14 @@ public class PaymentController {
         }
     }
 
+    /**
+     * Updates an existing payment record.
+     *
+     * @param payment the Payment object containing updated information
+     * @param id the unique identifier of the payment to update
+     * @return a ResponseEntity with a success message if the update is successful,
+     *         or an error response if the update fails
+     */
     @PutMapping("/superadmin/payment/{id}")
     public ResponseEntity<?> updatePayment(@RequestBody Payment payment, @PathVariable long id) {
         try {
@@ -76,6 +115,13 @@ public class PaymentController {
         }
     }
 
+    /**
+     * Deletes a payment record by its unique identifier.
+     *
+     * @param id the unique identifier of the payment to delete
+     * @return a ResponseEntity with a success message if deletion is successful,
+     *         or an error response if deletion fails
+     */
     @DeleteMapping("/superadmin/payment/{id}")
     public ResponseEntity<?> deletePayment(@PathVariable long id) {
         try {

@@ -10,15 +10,34 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * This class handles HTTP requests for managing client resources.
+ * It delegates business logic to the ClientUseCase.
+ *
+ * @author Alfredo Sobrados González
+ */
 @RestController
 @RequestMapping("/api")
 public class ClientController {
     private final ClientUseCase clientUseCase;
 
+    /**
+     * Constructs a ClientController with the provided ClientUseCase.
+     *
+     * @param clientUseCase the use case that contains the business logic for client operations
+     */
     public ClientController(ClientUseCase clientUseCase) {
         this.clientUseCase = clientUseCase;
     }
 
+    /**
+     * Retrieves all registered clients.
+     * <p>
+     * If no clients are registered, a RuntimeException is thrown and a 404 Not Found response is returned.
+     * </p>
+     *
+     * @return a ResponseEntity containing the list of clients or an error message if none are found
+     */
     @GetMapping("/admin/clients")
     public ResponseEntity<?> getAllClients() {
         try {
@@ -34,6 +53,12 @@ public class ClientController {
         }
     }
 
+    /**
+     * Retrieves a client by its unique identifier.
+     *
+     * @param id the unique identifier of the client
+     * @return a ResponseEntity containing the client if found, or a 404 Not Found response with an error message if not
+     */
     @GetMapping("/admin/client/{id}")
     public ResponseEntity<?> getClientById(@PathVariable long id) {
         try {
@@ -45,13 +70,20 @@ public class ClientController {
         }
     }
 
+    /**
+     * Deletes a client by its unique identifier.
+     *
+     * @param id the unique identifier of the client to delete
+     * @return a ResponseEntity with a success message if deletion is successful,
+     *         or a 404 Not Found response with an error message if deletion fails
+     */
     @DeleteMapping("/admin/client/{id}")
     public ResponseEntity<String> deleteClient(@PathVariable long id) {
         try {
             int response = clientUseCase.deleteClient(id);
 
             if (response == 1) {
-                return ResponseEntity.ok("Cliente con id: " + id + "eliminado correctamente.");
+                return ResponseEntity.ok("Cliente con id: " + id + " eliminado correctamente.");
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("El cliente no ha sido eliminado");
             }

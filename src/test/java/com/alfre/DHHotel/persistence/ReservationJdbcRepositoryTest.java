@@ -27,6 +27,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the reservations operations JDBC repository implementation.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class ReservationJdbcRepositoryTest {
 
@@ -39,19 +45,26 @@ public class ReservationJdbcRepositoryTest {
     @Mock
     private SimpleJdbcInsert insert;
 
-    // Construiremos manualmente el repositorio para inyectar los mocks
     private ReservationJdbcRepository reservationRepository;
 
     private final String table = "Reservation";
 
+    /**
+     * Initializes the test environment before each test.
+     * Injects jdbcTemplate and dataSource into the repository constructor,
+     * and replaces the internal SimpleJdbcInsert instance with the provided mock.
+     */
     @BeforeEach
     void setup() {
-        // Inyecta jdbcTemplate y dataSource en el constructor
+        // Inject jdbcTemplate and dataSource into the constructor
         reservationRepository = new ReservationJdbcRepository(jdbcTemplate, dataSource);
-        // Reemplaza la instancia interna de SimpleJdbcInsert por el mock
+        // Replace the internal SimpleJdbcInsert instance with the mock
         ReflectionTestUtils.setField(reservationRepository, "insert", insert);
     }
 
+    /**
+     * Tests that getAllReservations() returns all reservations as expected.
+     */
     @Test
     void testGetAllReservations() {
         // Arrange
@@ -71,11 +84,14 @@ public class ReservationJdbcRepositoryTest {
         List<Reservation> result = reservationRepository.getAllReservations();
 
         // Assert
-        assertNotNull(result, "La lista de reservas no debe ser nula");
-        assertEquals(2, result.size(), "Debe retornar 2 reservas");
-        assertEquals(res1, result.get(0), "La primera reserva debe coincidir");
+        assertNotNull(result, "The list of reservations should not be null");
+        assertEquals(2, result.size(), "Should return 2 reservations");
+        assertEquals(res1, result.getFirst(), "The first reservation should match the expected one");
     }
 
+    /**
+     * Tests that getReservationById() returns the expected reservation when found.
+     */
     @Test
     void testGetReservationById_found() {
         // Arrange
@@ -93,10 +109,13 @@ public class ReservationJdbcRepositoryTest {
         Optional<Reservation> result = reservationRepository.getReservationById(id);
 
         // Assert
-        assertTrue(result.isPresent(), "La reserva debe existir");
-        assertEquals(res, result.get(), "La reserva retornada debe coincidir con la esperada");
+        assertTrue(result.isPresent(), "The reservation should be present");
+        assertEquals(res, result.get(), "The returned reservation should match the expected one");
     }
 
+    /**
+     * Tests that getReservationById() returns an empty Optional when no reservation is found.
+     */
     @Test
     void testGetReservationById_notFound() {
         // Arrange
@@ -111,9 +130,12 @@ public class ReservationJdbcRepositoryTest {
         Optional<Reservation> result = reservationRepository.getReservationById(id);
 
         // Assert
-        assertFalse(result.isPresent(), "No se debe encontrar la reserva");
+        assertFalse(result.isPresent(), "No reservation should be found");
     }
 
+    /**
+     * Tests that getReservationsByClientId() returns the correct reservations for the given client.
+     */
     @Test
     void testGetReservationsByClientId() {
         // Arrange
@@ -135,11 +157,14 @@ public class ReservationJdbcRepositoryTest {
         List<Reservation> result = reservationRepository.getReservationsByClientId(clientId);
 
         // Assert
-        assertNotNull(result, "La lista de reservas no debe ser nula");
-        assertEquals(2, result.size(), "Debe retornar 2 reservas");
-        assertEquals(res1, result.get(0), "La primera reserva debe coincidir");
+        assertNotNull(result, "The list of reservations should not be null");
+        assertEquals(2, result.size(), "Should return 2 reservations");
+        assertEquals(res1, result.getFirst(), "The first reservation should match the expected one");
     }
 
+    /**
+     * Tests that createReservation() correctly creates a new reservation and returns the generated ID.
+     */
     @Test
     void testCreateReservation() {
         // Arrange
@@ -152,7 +177,7 @@ public class ReservationJdbcRepositoryTest {
         long generatedId = reservationRepository.createReservation(newRes);
 
         // Assert
-        assertEquals(1L, generatedId, "El ID generado debe ser 1");
+        assertEquals(1L, generatedId, "The generated ID should be 1");
 
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
 
@@ -160,20 +185,23 @@ public class ReservationJdbcRepositoryTest {
 
         MapSqlParameterSource params = captor.getValue();
 
-        assertEquals(newRes.client_id, params.getValue("client_id"), "El client_id debe coincidir");
-        assertEquals(newRes.room_id, params.getValue("roomId"), "El room_id debe coincidir");
-        assertEquals(newRes.total_price, params.getValue("totalPrice"), "El totalPrice debe coincidir");
-        assertEquals(newRes.start_date, params.getValue("startDate"), "La startDate debe coincidir");
-        assertEquals(newRes.end_date, params.getValue("endDate"), "La endDate debe coincidir");
-        assertEquals(newRes.status.name(), params.getValue("status"), "El status debe coincidir");
+        assertEquals(newRes.client_id, params.getValue("client_id"), "The client_id should match");
+        assertEquals(newRes.room_id, params.getValue("roomId"), "The room_id should match");
+        assertEquals(newRes.total_price, params.getValue("totalPrice"), "The totalPrice should match");
+        assertEquals(newRes.start_date, params.getValue("startDate"), "The startDate should match");
+        assertEquals(newRes.end_date, params.getValue("endDate"), "The endDate should match");
+        assertEquals(newRes.status.name(), params.getValue("status"), "The status should match");
     }
 
+    /**
+     * Tests that updateReservation() correctly updates the reservation and returns the number of rows updated.
+     */
     @Test
     void testUpdateReservation() {
         // Arrange
         Reservation updatedRes = new Reservation(1L, 10L, 100L, BigDecimal.valueOf(500.0),
                 Date.valueOf("2023-01-01"), Date.valueOf("2023-01-05"), ReservationStatus.CONFIRMED);
-        // Modificamos algún campo (por ejemplo, total_price)
+        // Modify a field (for example, total_price)
         updatedRes.total_price = BigDecimal.valueOf(550.0);
 
         String sql = "UPDATE " + table + " SET client_id = :clientId, room_id = :roomId, " +
@@ -186,7 +214,7 @@ public class ReservationJdbcRepositoryTest {
         int rows = reservationRepository.updateReservation(updatedRes);
 
         // Assert
-        assertEquals(1, rows, "Se debe actualizar 1 fila");
+        assertEquals(1, rows, "One row should be updated");
 
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
 
@@ -194,36 +222,40 @@ public class ReservationJdbcRepositoryTest {
 
         MapSqlParameterSource params = captor.getValue();
 
-        assertEquals(updatedRes.id, params.getValue("id"), "El id debe coincidir");
-        assertEquals(updatedRes.client_id, params.getValue("clientId"), "El client_id debe coincidir");
-        assertEquals(updatedRes.room_id, params.getValue("roomId"), "El room_id debe coincidir");
-        assertEquals(updatedRes.total_price, params.getValue("totalPrice"), "El total_price debe coincidir");
-        assertEquals(updatedRes.start_date, params.getValue("startDate"), "La start_date debe coincidir");
-        assertEquals(updatedRes.end_date, params.getValue("endDate"), "La end_date debe coincidir");
-        assertEquals(updatedRes.status.name(), params.getValue("status"), "El status debe coincidir");
+        assertEquals(updatedRes.id, params.getValue("id"), "The id should match");
+        assertEquals(updatedRes.client_id, params.getValue("clientId"), "The client_id should match");
+        assertEquals(updatedRes.room_id, params.getValue("roomId"), "The room_id should match");
+        assertEquals(updatedRes.total_price, params.getValue("totalPrice"), "The total_price should match");
+        assertEquals(updatedRes.start_date, params.getValue("startDate"), "The start_date should match");
+        assertEquals(updatedRes.end_date, params.getValue("endDate"), "The end_date should match");
+        assertEquals(updatedRes.status.name(), params.getValue("status"), "The status should match");
     }
 
+    /**
+     * Tests that isRoomAvailable() returns true when the room is available.
+     * A room is available if there are no overlapping reservations and it is not under maintenance.
+     */
     @Test
     void testIsRoomAvailable_available() {
-        // Arrange: La habitación está disponible si no existen reservas que se superpongan (count = 0)
+        // Arrange: The room is available if there are no overlapping reservations (count = 0)
         Long roomId = 100L;
         Date startDate = Date.valueOf("2023-05-01");
         Date endDate = Date.valueOf("2023-05-05");
 
         String sql = String.format("""
-            SELECT COALESCE(COUNT(*), 0)
-            FROM %s
-            WHERE room_id = :roomId
-            AND (
-                (start_date <= :endDate AND end_date >= :startDate)
-                AND status NOT IN ('CANCELED')
-            )
-            AND room_id NOT IN (
-                SELECT id
-                FROM Room
-                WHERE status = 'MAINTENANCE'
-            )
-            """, table);
+        SELECT COALESCE(COUNT(*), 0)
+        FROM %s
+        WHERE room_id = :roomId
+        AND (
+            (start_date <= :endDate AND end_date >= :startDate)
+            AND status NOT IN ('CANCELED')
+        )
+        AND room_id NOT IN (
+            SELECT id
+            FROM Room
+            WHERE status = 'MAINTENANCE'
+        )
+        """, table);
 
         when(jdbcTemplate.queryForObject(eq(sql), any(MapSqlParameterSource.class), eq(Integer.class)))
                 .thenReturn(0);
@@ -232,29 +264,33 @@ public class ReservationJdbcRepositoryTest {
         boolean available = reservationRepository.isRoomAvailable(roomId, startDate, endDate);
 
         // Assert
-        assertTrue(available, "La habitación debe estar disponible");
+        assertTrue(available, "The room should be available");
     }
 
+    /**
+     * Tests that isRoomAvailable() returns false when the room is not available.
+     * A room is unavailable if there is at least one overlapping reservation (count > 0).
+     */
     @Test
     void testIsRoomAvailable_unavailable() {
-        // Arrange: La habitación no está disponible si count > 0
+        // Arrange: The room is not available if count > 0
         Long roomId = 100L;
         Date startDate = Date.valueOf("2023-05-01");
         Date endDate = Date.valueOf("2023-05-05");
         String sql = String.format("""
-            SELECT COALESCE(COUNT(*), 0)
-            FROM %s
-            WHERE room_id = :roomId
-            AND (
-                (start_date <= :endDate AND end_date >= :startDate)
-                AND status NOT IN ('CANCELED')
-            )
-            AND room_id NOT IN (
-                SELECT id
-                FROM Room
-                WHERE status = 'MAINTENANCE'
-            )
-            """, table);
+        SELECT COALESCE(COUNT(*), 0)
+        FROM %s
+        WHERE room_id = :roomId
+        AND (
+            (start_date <= :endDate AND end_date >= :startDate)
+            AND status NOT IN ('CANCELED')
+        )
+        AND room_id NOT IN (
+            SELECT id
+            FROM Room
+            WHERE status = 'MAINTENANCE'
+        )
+        """, table);
 
         when(jdbcTemplate.queryForObject(eq(sql), any(MapSqlParameterSource.class), eq(Integer.class)))
                 .thenReturn(2);
@@ -263,59 +299,65 @@ public class ReservationJdbcRepositoryTest {
         boolean available = reservationRepository.isRoomAvailable(roomId, startDate, endDate);
 
         // Assert
-        assertFalse(available, "La habitación no debe estar disponible");
+        assertFalse(available, "The room should not be available");
     }
 
+    /**
+     * Tests that isRoomAvailable() throws an IllegalArgumentException when provided with invalid parameters.
+     */
     @Test
     void testIsRoomAvailable_invalidParameters() {
-        // Validaciones de parámetros nulos o fechas inválidas
+        // Arrange: Test null or invalid dates
 
         Long roomId = 100L;
         Date startDate = Date.valueOf("2023-05-05");
-        Date endDate = Date.valueOf("2023-05-01"); // endDate anterior a startDate
+        Date endDate = Date.valueOf("2023-05-01"); // endDate before startDate
 
-        // roomId null
+        // roomId is null
         Exception ex1 = assertThrows(IllegalArgumentException.class, () ->
                 reservationRepository.isRoomAvailable(null, startDate, endDate));
         assertEquals("El ID de la habitación no puede ser null", ex1.getMessage());
 
-        // startDate null
+        // startDate is null
         Exception ex2 = assertThrows(IllegalArgumentException.class, () ->
                 reservationRepository.isRoomAvailable(roomId, null, endDate));
         assertEquals("La fecha de inicio no puede ser null", ex2.getMessage());
 
-        // endDate null
+        // endDate is null
         Exception ex3 = assertThrows(IllegalArgumentException.class, () ->
                 reservationRepository.isRoomAvailable(roomId, startDate, null));
         assertEquals("La fecha de fin no puede ser null", ex3.getMessage());
 
-        // endDate antes que startDate
+        // endDate before startDate
         Exception ex4 = assertThrows(IllegalArgumentException.class, () ->
                 reservationRepository.isRoomAvailable(roomId, startDate, endDate));
         assertEquals("La fecha de fin no puede ser anterior a la fecha de inicio", ex4.getMessage());
     }
 
+    /**
+     * Tests that isRoomAvailable() correctly handles a DataAccessException thrown by jdbcTemplate.
+     */
     @Test
     void testIsRoomAvailable_dataAccessException() {
-        // Simula que jdbcTemplate.queryForObject lanza una DataAccessException
+        // Arrange: Simulate jdbcTemplate.queryForObject throwing a DataAccessException
         Long roomId = 100L;
         Date startDate = Date.valueOf("2023-05-01");
         Date endDate = Date.valueOf("2023-05-05");
 
         String sql = String.format("""
-            SELECT COALESCE(COUNT(*), 0)
-            FROM %s
-            WHERE room_id = :roomId
-            AND (
-                (start_date <= :endDate AND end_date >= :startDate)
-                AND status NOT IN ('CANCELED')
-            )
-            AND room_id NOT IN (
-                SELECT id
-                FROM Room
-                WHERE status = 'MAINTENANCE'
-            )
-            """, table);
+        SELECT COALESCE(COUNT(*), 0)
+        FROM %s
+        WHERE room_id = :roomId
+        AND (
+            (start_date <= :endDate AND end_date >= :startDate)
+            AND status NOT IN ('CANCELED')
+        )
+        AND room_id NOT IN (
+            SELECT id
+            FROM Room
+            WHERE status = 'MAINTENANCE'
+        )
+        """, table);
 
         when(jdbcTemplate.queryForObject(eq(sql), any(MapSqlParameterSource.class), eq(Integer.class)))
                 .thenThrow(new DataAccessException("DB error") {});

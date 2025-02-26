@@ -34,6 +34,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the rooms management operations controller.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class RoomControllerTest {
 
@@ -45,18 +51,27 @@ public class RoomControllerTest {
 
     private MockMvc mockMvc;
 
+    /**
+     * Sets up the MockMvc instance for testing the RoomController.
+     */
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(roomController).build();
     }
 
+    /**
+     * Tests that when all rooms are successfully retrieved,
+     * the API returns a JSON list containing the expected number of rooms.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetAllRooms_success_thenReturnsRoomList() throws Exception {
-        // Preparar
+        // Arrange: Prepare a list of two rooms
         List<Room> rooms = Arrays.asList(new Room(), new Room());
         when(roomUseCase.getAllRooms()).thenReturn(rooms);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify response details
         mockMvc.perform(get("/api/admin/rooms"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -66,12 +81,18 @@ public class RoomControllerTest {
         verify(roomUseCase, times(1)).getAllRooms();
     }
 
+    /**
+     * Tests that when no rooms are found,
+     * the API returns a 404 Not Found response with an appropriate message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetAllRooms_empty_thenReturnsNotFound() throws Exception {
-        // Simulamos una lista vacía para provocar el error
+        // Arrange: Simulate an empty room list
         when(roomUseCase.getAllRooms()).thenReturn(emptyList());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify that the response indicates not found
         mockMvc.perform(get("/api/admin/rooms"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("No hay habitaciones registrados en el sistema."))
@@ -80,14 +101,20 @@ public class RoomControllerTest {
         verify(roomUseCase, times(1)).getAllRooms();
     }
 
+    /**
+     * Tests that when a room is successfully retrieved by its ID,
+     * the API returns the corresponding room details.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetRoomById_success_thenReturnsRoom() throws Exception {
-        // Preparar
+        // Arrange: Set up a room with a specific ID
         long roomId = 1L;
         Room room = new Room();
         when(roomUseCase.getRoomById(roomId)).thenReturn(Optional.of(room));
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET with the room ID and verify the room is returned
         mockMvc.perform(get("/api/admin/room/{id}", roomId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").exists())
@@ -96,14 +123,19 @@ public class RoomControllerTest {
         verify(roomUseCase).getRoomById(roomId);
     }
 
+    /**
+     * Tests that when a room is not found by its ID,
+     * the API returns a 404 Not Found response with an appropriate message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetRoomById_notFound_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Arrange: Set up a scenario where the room is not found
         long roomId = 999L;
-        // Simulamos que no se encuentra la habitación
         when(roomUseCase.getRoomById(roomId)).thenReturn(Optional.empty());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET with the room ID and verify a not found response
         mockMvc.perform(get("/api/admin/room/{id}", roomId))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("La habitación solicitada no existe."))
@@ -112,13 +144,19 @@ public class RoomControllerTest {
         verify(roomUseCase, times(1)).getRoomById(roomId);
     }
 
+    /**
+     * Tests that when a room is successfully created,
+     * the API returns the created room's ID.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenCreateRoom_success_thenReturnsCreatedRoom() throws Exception {
-        // Preparar
+        // Arrange: Simulate creation by returning a room ID
         long roomId = 5L;
         when(roomUseCase.createRoom(any(Room.class))).thenReturn(roomId);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform POST and verify successful creation
         mockMvc.perform(post("/api/admin/room")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -128,13 +166,19 @@ public class RoomControllerTest {
         verify(roomUseCase).createRoom(any(Room.class));
     }
 
+    /**
+     * Tests that when room creation fails,
+     * the API returns a 400 Bad Request response with the error message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenCreateRoom_failure_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Arrange: Simulate an exception during room creation
         when(roomUseCase.createRoom(any(Room.class)))
                 .thenThrow(new RuntimeException("Error creando habitación"));
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform POST and verify the error response
         mockMvc.perform(post("/api/admin/room")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -145,13 +189,19 @@ public class RoomControllerTest {
         verify(roomUseCase).createRoom(any(Room.class));
     }
 
+    /**
+     * Tests that when a room is successfully updated,
+     * the API returns a 200 OK response with a success message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenUpdateRoom_success_thenReturnsOk() throws Exception {
-        // Preparar
+        // Arrange: Set up the room ID and simulate a successful update (returns 1 row updated)
         long roomId = 1L;
         when(roomUseCase.updateRoom(any(Room.class), eq(roomId))).thenReturn(1);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT and verify the successful update response
         mockMvc.perform(put("/api/admin/room/{id}", roomId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -162,13 +212,19 @@ public class RoomControllerTest {
         verify(roomUseCase).updateRoom(any(Room.class), eq(roomId));
     }
 
+    /**
+     * Tests that when a room update fails (e.g. returns 0 rows updated),
+     * the API returns a 400 Bad Request response with an error message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenUpdateRoom_failure_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Arrange: Simulate update failure by returning 0 rows updated
         long roomId = 1L;
         when(roomUseCase.updateRoom(any(Room.class), eq(roomId))).thenReturn(0);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT and verify the failure response
         mockMvc.perform(put("/api/admin/room/{id}", roomId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -179,14 +235,20 @@ public class RoomControllerTest {
         verify(roomUseCase).updateRoom(any(Room.class), eq(roomId));
     }
 
+    /**
+     * Tests that when an exception occurs during room update,
+     * the API returns a 500 Internal Server Error response with the error message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenUpdateRoom_exception_thenReturnsInternalServerError() throws Exception {
-        // Preparar
+        // Arrange: Simulate an exception during update
         long roomId = 1L;
         when(roomUseCase.updateRoom(any(Room.class), eq(roomId)))
                 .thenThrow(new RuntimeException("Error de servicio."));
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT and verify the internal server error response
         mockMvc.perform(put("/api/admin/room/{id}", roomId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -197,13 +259,19 @@ public class RoomControllerTest {
         verify(roomUseCase).updateRoom(any(Room.class), eq(roomId));
     }
 
+    /**
+     * Tests that when a room is successfully deleted,
+     * the API returns a 200 OK response with a confirmation message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenDeleteRoom_success_thenReturnsOk() throws Exception {
-        // Preparar
+        // Arrange: Simulate successful deletion returning 1
         long roomId = 1L;
         when(roomUseCase.deleteRoom(roomId)).thenReturn(1);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform DELETE and verify the success message
         mockMvc.perform(delete("/api/admin/room/{idDeleteRoom}", roomId))
                 .andExpect(status().isOk())
                 .andExpect(content()
@@ -213,13 +281,19 @@ public class RoomControllerTest {
         verify(roomUseCase).deleteRoom(roomId);
     }
 
+    /**
+     * Tests that when room deletion fails,
+     * the API returns a 400 Bad Request response with an error message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenDeleteRoom_failure_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Arrange: Simulate deletion failure by returning 0
         long roomId = 999L;
         when(roomUseCase.deleteRoom(roomId)).thenReturn(0);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform DELETE and verify the error response
         mockMvc.perform(delete("/api/admin/room/{idDeleteRoom}", roomId))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("No se ha podido eliminar."))
@@ -228,13 +302,19 @@ public class RoomControllerTest {
         verify(roomUseCase).deleteRoom(roomId);
     }
 
+    /**
+     * Tests that when an exception occurs during room deletion,
+     * the API returns a 500 Internal Server Error response with an error message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenDeleteRoom_exception_thenReturnsInternalServerError() throws Exception {
-        // Preparar
+        // Arrange: Simulate an exception during deletion
         long roomId = 1L;
         when(roomUseCase.deleteRoom(roomId)).thenThrow(new RuntimeException());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform DELETE and verify the internal server error response
         mockMvc.perform(delete("/api/admin/room/{idDeleteRoom}", roomId))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("Error de servicio."))
@@ -243,9 +323,15 @@ public class RoomControllerTest {
         verify(roomUseCase).deleteRoom(roomId);
     }
 
+    /**
+     * Tests that when rooms are retrieved by type successfully,
+     * the API returns a list of RoomDTOs of the specified type.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetRoomsByType_success_thenReturnsRoomDTOList() throws Exception {
-        // Preparar
+        // Arrange: Prepare a list of RoomDTOs for a given type
         RoomType type = RoomType.SINGLE;
         RoomDTO roomDTO1 = RoomDTO.builder().build();
         RoomDTO roomDTO2 = RoomDTO.builder().build();
@@ -253,7 +339,7 @@ public class RoomControllerTest {
         List<RoomDTO> roomDTOs = Arrays.asList(roomDTO1, roomDTO2);
         when(roomUseCase.getRoomsByType(type)).thenReturn(roomDTOs);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify that the list is returned
         mockMvc.perform(get("/api/public/rooms/type/{type}", type)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -263,14 +349,19 @@ public class RoomControllerTest {
         verify(roomUseCase).getRoomsByType(type);
     }
 
+    /**
+     * Tests that when no rooms of a given type are found,
+     * the API returns a 404 Not Found response with an appropriate message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetRoomsByType_empty_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Arrange: Simulate no rooms found for the given type
         RoomType type = RoomType.SINGLE;
-        // Simulamos que no hay habitaciones del tipo solicitado
         when(roomUseCase.getRoomsByType(type)).thenReturn(emptyList());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify the not found response
         mockMvc.perform(get("/api/public/rooms/type/{type}", type)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -280,16 +371,22 @@ public class RoomControllerTest {
         verify(roomUseCase, times(1)).getRoomsByType(type);
     }
 
+    /**
+     * Tests that when available rooms are retrieved successfully,
+     * the API returns a list of available RoomDTOs.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetAvailableRooms_success_thenReturnsRoomDTOList() throws Exception {
-        // Preparar
+        // Arrange: Prepare a list of available RoomDTOs
         RoomDTO roomDTO1 = RoomDTO.builder().build();
         RoomDTO roomDTO2 = RoomDTO.builder().build();
 
         List<RoomDTO> roomDTOs = Arrays.asList(roomDTO1, roomDTO2);
         when(roomUseCase.getAvailableRooms()).thenReturn(roomDTOs);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify the returned list
         mockMvc.perform(get("/api/public/rooms/available")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -299,12 +396,18 @@ public class RoomControllerTest {
         verify(roomUseCase).getAvailableRooms();
     }
 
+    /**
+     * Tests that when no available rooms are found,
+     * the API returns a 404 Not Found response with an appropriate message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetAvailableRooms_empty_thenReturnsNotFound() throws Exception {
-        // Simulamos que no hay habitaciones disponibles
+        // Arrange: Simulate an empty list of available rooms
         when(roomUseCase.getAvailableRooms()).thenReturn(emptyList());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify the not found response
         mockMvc.perform(get("/api/public/rooms/available")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -314,14 +417,20 @@ public class RoomControllerTest {
         verify(roomUseCase, times(1)).getAvailableRooms();
     }
 
+    /**
+     * Tests that when the room status is successfully updated,
+     * the API returns a 200 OK response with a success message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenUpdateStatus_success_thenReturnsOk() throws Exception {
-        // Preparar
+        // Arrange: Set the room ID and desired status, and simulate a successful update (1 row updated)
         long roomId = 1L;
-        RoomStatus status = RoomStatus.AVAILABLE; // se asume que existe en el enum
+        RoomStatus status = RoomStatus.AVAILABLE;
         when(roomUseCase.updateStatus(roomId, status)).thenReturn(1);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT and verify the successful update response
         mockMvc.perform(put("/api/admin/rooms/{id}/status/{status}", roomId, status))
                 .andExpect(status().isOk())
                 .andExpect(content().string("La actualización se ha hecho correctamente"))
@@ -330,14 +439,20 @@ public class RoomControllerTest {
         verify(roomUseCase).updateStatus(roomId, status);
     }
 
+    /**
+     * Tests that when updating the room status fails (i.e., 0 rows updated),
+     * the API returns a 500 Internal Server Error response with an error message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenUpdateStatus_failure_thenReturnsInternalServerError() throws Exception {
-        // Preparar
+        // Arrange: Simulate update failure by returning 0 rows updated
         long roomId = 1L;
         RoomStatus status = RoomStatus.AVAILABLE;
         when(roomUseCase.updateStatus(roomId, status)).thenReturn(0);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT and verify the error response
         mockMvc.perform(put("/api/admin/rooms/{id}/status/{status}", roomId, status))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("No se ha podido actualizar."))
@@ -346,15 +461,21 @@ public class RoomControllerTest {
         verify(roomUseCase).updateStatus(roomId, status);
     }
 
+    /**
+     * Tests that when an exception occurs while updating the room status,
+     * the API returns a 500 Internal Server Error response with the exception message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenUpdateStatus_exception_thenReturnsInternalServerError() throws Exception {
-        // Preparar
+        // Arrange: Simulate an exception during the status update
         long roomId = 1L;
         RoomStatus status = RoomStatus.AVAILABLE;
         when(roomUseCase.updateStatus(roomId, status))
                 .thenThrow(new RuntimeException("Error de servicio."));
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT and verify the exception response
         mockMvc.perform(put("/api/admin/rooms/{id}/status/{status}", roomId, status))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("Error de servicio."))
@@ -363,14 +484,19 @@ public class RoomControllerTest {
         verify(roomUseCase).updateStatus(roomId, status);
     }
 
-
+    /**
+     * Tests that when rooms in maintenance are successfully retrieved,
+     * the API returns a list of rooms under maintenance.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetRoomsInMaintenance_success_thenReturnsRoomList() throws Exception {
-        // Preparar
+        // Arrange: Prepare a list of rooms in maintenance
         List<Room> rooms = Arrays.asList(new Room(), new Room());
         when(roomUseCase.getRoomsInMaintenance()).thenReturn(rooms);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify the list is returned
         mockMvc.perform(get("/api/admin/rooms/maintenance"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -379,12 +505,18 @@ public class RoomControllerTest {
         verify(roomUseCase).getRoomsInMaintenance();
     }
 
+    /**
+     * Tests that when no rooms in maintenance are found,
+     * the API returns a 404 Not Found response with an appropriate message.
+     *
+     * @throws Exception if an error occurs during the test execution.
+     */
     @Test
     public void whenGetRoomsInMaintenance_empty_thenReturnsNotFound() throws Exception {
-        // Simulamos que no hay habitaciones en mantenimiento
+        // Arrange: Simulate an empty list of rooms in maintenance
         when(roomUseCase.getRoomsInMaintenance()).thenReturn(emptyList());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET and verify the not found response
         mockMvc.perform(get("/api/admin/rooms/maintenance"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("No hay habitaciones en mantenimiento en el sistema."))

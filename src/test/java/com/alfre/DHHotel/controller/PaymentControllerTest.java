@@ -25,6 +25,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the payments operations controller.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class PaymentControllerTest {
     @Mock
@@ -35,18 +41,26 @@ public class PaymentControllerTest {
 
     private MockMvc mockMvc;
 
+    /**
+     * Configures MockMvc in standalone mode with the PaymentController before each test.
+     */
     @BeforeEach
-    void setup() {
+    public void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(paymentController).build();
     }
 
+    /**
+     * Tests that when retrieving all payments successfully, the endpoint returns a JSON list containing the expected number of payments.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenGetAllPayments_success_thenReturnsPaymentList() throws Exception {
-        // Preparar
+        // Arrange: Prepare a list of payments.
         List<Payment> paymentList = Arrays.asList(new Payment(), new Payment());
         when(paymentUseCase.getAllPayments()).thenReturn(paymentList);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET request and verify that the response contains two payments.
         mockMvc.perform(get("/api/admin/payments").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -56,14 +70,18 @@ public class PaymentControllerTest {
         verify(paymentUseCase, times(1)).getAllPayments();
     }
 
+    /**
+     * Tests that when no payments are found, the endpoint returns a 404 Not Found with an appropriate message.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenGetAllPayments_failure_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Arrange: Prepare an empty payment list.
         List<Payment> paymentList = new ArrayList<>();
-
         when(paymentUseCase.getAllPayments()).thenReturn(paymentList);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET request and verify that a 404 status is returned with the expected message.
         mockMvc.perform(get("/api/admin/payments")
                         .with(csrf()))
                 .andExpect(status().isNotFound())
@@ -72,15 +90,20 @@ public class PaymentControllerTest {
         verify(paymentUseCase).getAllPayments();
     }
 
+    /**
+     * Tests that when retrieving a payment by a valid ID, the endpoint returns the expected payment.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenGetPaymentById_success_thenReturnsPayment() throws Exception {
-        // Preparar
+        // Arrange: Prepare a sample payment with a specific ID.
         long paymentId = 1L;
         Payment payment = new Payment();
         payment.setId(paymentId);
         when(paymentUseCase.getPaymentById(paymentId)).thenReturn(Optional.of(payment));
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET request and verify the returned JSON contains the correct payment ID.
         mockMvc.perform(get("/api/admin/payment/{id}", paymentId).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(paymentId))
@@ -89,13 +112,19 @@ public class PaymentControllerTest {
         verify(paymentUseCase).getPaymentById(paymentId);
     }
 
+    /**
+     * Tests that when retrieving a payment by an ID that does not exist,
+     * the endpoint returns a 404 Not Found with the appropriate error message.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenGetPaymentById_notFound_thenReturns404() throws Exception {
-        // Preparar
+        // Arrange: Use a non-existent payment ID.
         long nonExistentId = 999L;
         when(paymentUseCase.getPaymentById(nonExistentId)).thenReturn(Optional.empty());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET request and verify a 404 status with an error message.
         mockMvc.perform(get("/api/admin/payment/{id}", nonExistentId)
                         .with(csrf()))
                 .andExpect(status().isNotFound())
@@ -103,15 +132,19 @@ public class PaymentControllerTest {
                 .andDo(print());
     }
 
-    // Tests para getPaymentsByReservationId
+    /**
+     * Tests that when retrieving payments by reservation ID successfully, the endpoint returns a list of payments.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenGetPaymentsByReservationId_success_thenReturnsPaymentList() throws Exception {
-        // Preparar
+        // Arrange: Prepare a list of payments associated with a reservation.
         long reservationId = 1L;
         List<Payment> payments = Arrays.asList(new Payment(), new Payment());
         when(paymentUseCase.getPaymentsByReservationId(reservationId)).thenReturn(payments);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET request and verify that the response contains the expected number of payments.
         mockMvc.perform(get("/api/admin/payment/reservation/id/{reservationId}", reservationId)
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -121,31 +154,40 @@ public class PaymentControllerTest {
         verify(paymentUseCase).getPaymentsByReservationId(reservationId);
     }
 
+    /**
+     * Tests that when no payments are associated with a reservation, the endpoint returns a 404 Not Found.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenGetPaymentsByReservationId_failure_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Arrange: Prepare an empty list for a reservation.
         long reservationId = 1L;
         List<Payment> payments = new ArrayList<>();
         when(paymentUseCase.getPaymentsByReservationId(reservationId)).thenReturn(payments);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform GET request and verify that a 404 status is returned with the expected message.
         mockMvc.perform(get("/api/admin/payment/reservation/id/{reservationId}", reservationId)
                         .with(csrf()))
                 .andExpect(status().isNotFound())
-                .andExpect(content()
-                        .string("No hay pagos registrados asociados a la reserva en el sistema."));
+                .andExpect(content().string("No hay pagos registrados asociados a la reserva en el sistema."));
 
         verify(paymentUseCase).getPaymentsByReservationId(reservationId);
     }
 
+    /**
+     * Tests that updating a payment with valid data returns a success message.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenUpdatePayment_success_thenReturnsOk() throws Exception {
-        // Preparar
+        // Arrange: Prepare a payment update scenario.
         long paymentId = 1L;
         Payment payment = new Payment();
         when(paymentUseCase.updatePayment(any(Payment.class), eq(paymentId))).thenReturn(1);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT request and verify the success message.
         mockMvc.perform(put("/api/superadmin/payment/{id}", paymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"id\":1}")
@@ -155,13 +197,18 @@ public class PaymentControllerTest {
                 .andDo(print());
     }
 
+    /**
+     * Tests that when updating a payment fails (e.g., no rows updated), the endpoint returns a 400 Bad Request.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenUpdatePayment_failure_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Arrange: Stub the updatePayment method to return 0 (failure).
         long paymentId = 1L;
         when(paymentUseCase.updatePayment(any(), eq(paymentId))).thenReturn(0);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT request and verify that a 400 Bad Request is returned with the expected message.
         mockMvc.perform(put("/api/superadmin/payment/{id}", paymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
@@ -171,13 +218,18 @@ public class PaymentControllerTest {
                 .andDo(print());
     }
 
+    /**
+     * Tests that when updating a payment throws an exception, the endpoint returns a 500 Internal Server Error.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenUpdatePayment_exception_thenReturnsInternalError() throws Exception {
-        // Preparar
+        // Arrange: Stub updatePayment to throw a RuntimeException.
         long paymentId = 1L;
         when(paymentUseCase.updatePayment(any(), eq(paymentId))).thenThrow(new RuntimeException("Error de base de datos"));
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform PUT request and verify that a 500 Internal Server Error is returned with the exception message.
         mockMvc.perform(put("/api/superadmin/payment/{id}", paymentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
@@ -187,39 +239,54 @@ public class PaymentControllerTest {
                 .andDo(print());
     }
 
+    /**
+     * Tests that when deleting a payment successfully, the endpoint returns a success message.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenDeletePayment_success_thenReturnsOk() throws Exception {
-        // Preparar
+        // Arrange: Prepare a scenario where deletePayment returns 1.
         long paymentId = 1L;
         when(paymentUseCase.deletePayment(paymentId)).thenReturn(1);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform DELETE request and verify the success message.
         mockMvc.perform(delete("/api/superadmin/payment/{id}", paymentId).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("El pago con id: 1 se ha eliminado correctamente"))
                 .andDo(print());
     }
 
+    /**
+     * Tests that when deleting a payment fails (returns 0), the endpoint returns a 400 Bad Request.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenDeletePayment_failure_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Arrange: Prepare a scenario where deletion fails.
         long paymentId = 999L;
         when(paymentUseCase.deletePayment(paymentId)).thenReturn(0);
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform DELETE request and verify that a 400 status is returned with the expected message.
         mockMvc.perform(delete("/api/superadmin/payment/{id}", paymentId).with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("No se ha podido eliminar."))
                 .andDo(print());
     }
 
+    /**
+     * Tests that when deleting a payment throws an exception, the endpoint returns a 500 Internal Server Error.
+     *
+     * @throws Exception if an error occurs during the HTTP request
+     */
     @Test
     public void whenDeletePayment_exception_thenReturnsInternalError() throws Exception {
-        // Preparar
+        // Arrange: Prepare a scenario where deletion throws an exception.
         long paymentId = 1L;
         when(paymentUseCase.deletePayment(paymentId)).thenThrow(new RuntimeException());
 
-        // Ejecutar y Verificar
+        // Act & Assert: Perform DELETE request and verify that a 500 status is returned with the error message.
         mockMvc.perform(delete("/api/superadmin/payment/{id}", paymentId).with(csrf()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("Error de servicio."))

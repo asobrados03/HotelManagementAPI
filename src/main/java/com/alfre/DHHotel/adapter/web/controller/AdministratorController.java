@@ -10,15 +10,35 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * This class handles HTTP requests for managing administrator resources.
+ * It delegates business logic to the AdministratorUseCase.
+ *
+ * @author Alfredo Sobrados González
+ */
 @RestController
 @RequestMapping("/api/superadmin")
 public class AdministratorController {
     private final AdministratorUseCase administratorUseCase;
 
+    /**
+     * Constructs an AdministratorController with the provided AdministratorUseCase.
+     *
+     * @param administratorUseCase the use case that contains the business logic for administrators
+     */
     public AdministratorController(AdministratorUseCase administratorUseCase) {
         this.administratorUseCase = administratorUseCase;
     }
 
+    /**
+     * Retrieves all administrators from the system.
+     * <p>
+     * If no administrators are registered, a RuntimeException is thrown and a 404 Not Found response is returned.
+     * </p>
+     *
+     * @return a ResponseEntity containing a list of Administrator objects if found,
+     *         or a 404 Not Found status with an error message otherwise
+     */
     @GetMapping("/admins")
     public ResponseEntity<?> getAllAdministrators() {
         try {
@@ -33,6 +53,13 @@ public class AdministratorController {
         }
     }
 
+    /**
+     * Retrieves an administrator by the associated user ID.
+     *
+     * @param userId the user ID of the administrator to retrieve
+     * @return a ResponseEntity containing the Administrator object if found,
+     *         or a 404 Not Found status with an error message if not found
+     */
     @GetMapping("/admin/userId/{userId}")
     public ResponseEntity<?> getAdministratorByUserId(@PathVariable long userId) {
         try {
@@ -44,6 +71,13 @@ public class AdministratorController {
         }
     }
 
+    /**
+     * Retrieves an administrator by their unique identifier.
+     *
+     * @param id the unique identifier of the administrator to retrieve
+     * @return a ResponseEntity containing the Administrator object if found,
+     *         or a 404 Not Found status with an error message if not found
+     */
     @GetMapping("/admin/id/{id}")
     public ResponseEntity<?> getAdministratorById(@PathVariable long id) {
         try {
@@ -55,9 +89,17 @@ public class AdministratorController {
         }
     }
 
+    /**
+     * Updates the administrator information for a given user.
+     *
+     * @param administrator the Administrator object containing updated data
+     * @param userId the user ID associated with the administrator to update
+     * @return a ResponseEntity with a success message if the update is successful,
+     *         or a 400 Bad Request status with an error message if the update fails
+     */
     @PutMapping("/admin/{userId}")
     public ResponseEntity<String> updateAdministrator(@RequestBody Administrator administrator,
-                                                             @PathVariable long userId) {
+                                                      @PathVariable long userId) {
         int rowsAffected = administratorUseCase.updateAdministrator(administrator, userId);
 
         if(rowsAffected == 1){
@@ -67,6 +109,13 @@ public class AdministratorController {
         }
     }
 
+    /**
+     * Deletes an administrator by their unique identifier.
+     *
+     * @param id the unique identifier of the administrator to delete
+     * @return a ResponseEntity with a success message if deletion is successful,
+     *         or a 404 Not Found/400 Bad Request status with an error message if deletion fails
+     */
     @DeleteMapping("/admin/{id}")
     public ResponseEntity<String> deleteAdministrator(@PathVariable long id) {
         try {

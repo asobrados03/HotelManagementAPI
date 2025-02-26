@@ -15,6 +15,12 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This class contains the attributes and methods of the client repository in the adapter layer that access to
+ * the database of the API and performs the operations relation to clients
+ *
+ * @author Alfredo Sobrados González
+ */
 @Repository
 public class ClientJdbcRepository implements ClientRepository {
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -25,18 +31,36 @@ public class ClientJdbcRepository implements ClientRepository {
 
     private final String table = "Client";
 
+    /**
+     * Constructs a ClientJdbcRepository with the provided NamedParameterJdbcTemplate and DataSource.
+     * This constructor initializes the jdbcTemplate and configures a SimpleJdbcInsert for the table.
+     *
+     * @param namedParameterJdbcTemplate the template for executing parameterized SQL queries
+     * @param dataSource the DataSource for obtaining database connections
+     */
     public ClientJdbcRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate, DataSource dataSource) {
         this.jdbcTemplate = namedParameterJdbcTemplate;
         this.insert = new SimpleJdbcInsert(dataSource).withTableName(table)
                 .usingGeneratedKeyColumns("id");
     }
 
+    /**
+     * Retrieves all clients from the database.
+     *
+     * @return a list of all Client objects
+     */
     @Override
     public List<Client> getAllClients() {
-        String sql = "SELECT * FROM "+table;
+        String sql = "SELECT * FROM " + table;
         return jdbcTemplate.query(sql, mapper);
     }
 
+    /**
+     * Retrieves a client by its unique identifier.
+     *
+     * @param id the unique identifier of the client
+     * @return an Optional containing the Client if found, or an empty Optional if not found
+     */
     @Override
     public Optional<Client> getClientById(long id) {
         String sql = "SELECT * FROM " + table + " WHERE id = :id";
@@ -48,6 +72,12 @@ public class ClientJdbcRepository implements ClientRepository {
         }
     }
 
+    /**
+     * Retrieves a client by its associated user ID.
+     *
+     * @param userId the user ID associated with the client
+     * @return an Optional containing the Client if found, or an empty Optional if not found
+     */
     @Override
     public Optional<Client> getClientByUserId(long userId) {
         String sql = "SELECT * FROM " + table + " WHERE user_id = :userId";
@@ -59,6 +89,12 @@ public class ClientJdbcRepository implements ClientRepository {
         }
     }
 
+    /**
+     * Creates a new client record in the database.
+     *
+     * @param newClient the Client object to be inserted
+     * @return the generated ID of the newly created client
+     */
     @Override
     public long createClient(Client newClient) {
         return insert.executeAndReturnKey(
@@ -70,6 +106,12 @@ public class ClientJdbcRepository implements ClientRepository {
         ).longValue();
     }
 
+    /**
+     * Updates an existing client record in the database.
+     *
+     * @param client the Client object containing updated values
+     * @return the updated Client object after executing the update
+     */
     @Override
     public Client updateClient(Client client) {
         String sql = "UPDATE " + table + " SET first_name = :first_name, last_name = :last_name, phone = :phone"
@@ -84,14 +126,28 @@ public class ClientJdbcRepository implements ClientRepository {
         return client;
     }
 
+    /**
+     * Deletes all client records from the database.
+     */
     @Override
     public void deleteAll() {
         String sql = "DELETE FROM " + table;
         jdbcTemplate.update(sql, new MapSqlParameterSource());
     }
 
+    /**
+     * Maps rows of a SQL ResultSet to Client objects.
+     */
     public static class ClientMapper implements RowMapper<Client> {
 
+        /**
+         * Maps the current row of the given ResultSet to a Client object.
+         *
+         * @param rs the ResultSet to map (pre-initialized for the current row)
+         * @param rowNum the number of the current row
+         * @return a Client object corresponding to the current row
+         * @throws SQLException if an SQL error occurs while mapping the row
+         */
         @Override
         public Client mapRow(ResultSet rs, int rowNum) throws SQLException {
             long id = rs.getLong("id");

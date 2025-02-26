@@ -25,6 +25,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the system administrators JDBC repository implementation.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class AdministratorJdbcRepositoryTest {
 
@@ -41,14 +47,28 @@ public class AdministratorJdbcRepositoryTest {
 
     private final String table = "Administrator";
 
+    /**
+     * Sets up the AdministratorJdbcRepository test environment.
+     * <p>
+     * This method injects the mocked jdbcTemplate and dataSource into the repository,
+     * and uses ReflectionTestUtils to set the "insert" field to the mocked SimpleJdbcInsert.
+     * </p>
+     */
     @BeforeEach
-    void setUp() {
-        // Construimos el repositorio inyectando el jdbcTemplate y el dataSource mockeados.
+    void setup() {
+        // Construct the repository by injecting the mocked jdbcTemplate and dataSource.
         administratorRepository = new AdministratorJdbcRepository(jdbcTemplate, dataSource);
-        // Inyectamos nuestro mock de SimpleJdbcInsert en el repositorio (ya que en el constructor se crea uno nuevo)
+        // Inject the mocked SimpleJdbcInsert into the repository.
         ReflectionTestUtils.setField(administratorRepository, "insert", insert);
     }
 
+    /**
+     * Tests that {@code getAllAdministrators()} returns the expected list of administrators.
+     * <p>
+     * It stubs the jdbcTemplate query call with a SQL statement and an AdministratorMapper,
+     * and verifies that the returned list is not null, has the expected size, and the first element's properties match.
+     * </p>
+     */
     @Test
     public void testGetAllAdministrators() {
         // Arrange
@@ -59,25 +79,32 @@ public class AdministratorJdbcRepositoryTest {
 
         String sql = "SELECT * FROM " + table;
 
-        // Configuramos el stub usando matchers para que coincida con la llamada real.
+        // Configure the stub using matchers to match the real call.
         when(jdbcTemplate.query(eq(sql), any(AdministratorJdbcRepository.AdministratorMapper.class)))
-        .thenReturn(administratorList);
+                .thenReturn(administratorList);
 
         // Act
         List<Administrator> listaObtenida = administratorRepository.getAllAdministrators();
 
         // Assert
-        assertNotNull(listaObtenida, "La lista de administradores no debe ser nula");
-        assertEquals(2, listaObtenida.size(), "Debe haber 2 administradores");
+        assertNotNull(listaObtenida, "The list of administrators should not be null");
+        assertEquals(2, listaObtenida.size(), "There should be 2 administrators");
 
-        // Validamos el primer elemento
-        Administrator expected = administratorList.getFirst();
-        Administrator actual = listaObtenida.getFirst();
-        assertEquals(expected.id, actual.id, "El ID del primer administrador debe coincidir");
-        assertEquals(expected.user_id, actual.user_id, "El user_id del primer administrador debe coincidir");
-        assertEquals(expected.name, actual.name, "El nombre del primer administrador debe coincidir");
+        // Validate the first element
+        Administrator expected = administratorList.get(0);
+        Administrator actual = listaObtenida.get(0);
+        assertEquals(expected.id, actual.id, "The ID of the first administrator should match");
+        assertEquals(expected.user_id, actual.user_id, "The user_id of the first administrator should match");
+        assertEquals(expected.name, actual.name, "The name of the first administrator should match");
     }
 
+    /**
+     * Tests that {@code getAdministratorByUserId(String)} returns an administrator when found.
+     * <p>
+     * It simulates a repository call that finds an administrator for a given userId parameter (as a String),
+     * then verifies that the returned Optional is present and its properties match the expected administrator.
+     * </p>
+     */
     @Test
     public void testGetAdministratorByUserIdString_found() {
         // Arrange
@@ -85,7 +112,7 @@ public class AdministratorJdbcRepositoryTest {
         Administrator expectedAdmin = new Administrator(1L, 5L, "Admin1");
         String sql = "SELECT * FROM " + table + " WHERE user_id = :userId";
 
-        // Simulamos que se encuentra el administrador
+        // Simulate that the administrator is found.
         when(jdbcTemplate.queryForObject(eq(sql), any(MapSqlParameterSource.class),
                 any(AdministratorJdbcRepository.AdministratorMapper.class))).thenReturn(expectedAdmin);
 
@@ -93,13 +120,19 @@ public class AdministratorJdbcRepositoryTest {
         Optional<Administrator> result = administratorRepository.getAdministratorByUserId(userIdParam);
 
         // Assert
-        assertTrue(result.isPresent(), "El administrador debe existir");
+        assertTrue(result.isPresent(), "The administrator should exist");
         Administrator admin = result.get();
-        assertEquals(expectedAdmin.id, admin.id, "El ID debe coincidir");
-        assertEquals(expectedAdmin.user_id, admin.user_id, "El user_id debe coincidir");
-        assertEquals(expectedAdmin.name, admin.name, "El nombre debe coincidir");
+        assertEquals(expectedAdmin.id, admin.id, "The ID should match");
+        assertEquals(expectedAdmin.user_id, admin.user_id, "The user_id should match");
+        assertEquals(expectedAdmin.name, admin.name, "The name should match");
     }
 
+    /**
+     * Tests that {@code getAdministratorByUserId(String)} returns an empty Optional when no administrator is found.
+     * <p>
+     * It simulates the jdbcTemplate throwing an EmptyResultDataAccessException, and verifies that the result is not present.
+     * </p>
+     */
     @Test
     public void testGetAdministratorByUserIdString_notFound() {
         // Arrange
@@ -113,9 +146,15 @@ public class AdministratorJdbcRepositoryTest {
         Optional<Administrator> result = administratorRepository.getAdministratorByUserId(userIdParam);
 
         // Assert
-        assertFalse(result.isPresent(), "No se debe encontrar el administrador");
+        assertFalse(result.isPresent(), "The administrator should not be found");
     }
 
+    /**
+     * Tests that {@code getAdministratorById(long)} returns the expected administrator when found.
+     * <p>
+     * It stubs the jdbcTemplate call for a given id and verifies that the returned Optional contains the expected administrator.
+     * </p>
+     */
     @Test
     public void testGetAdministratorById_found() {
         // Arrange
@@ -129,13 +168,19 @@ public class AdministratorJdbcRepositoryTest {
         Optional<Administrator> result = administratorRepository.getAdministratorById(id);
 
         // Assert
-        assertTrue(result.isPresent(), "El administrador debe existir");
+        assertTrue(result.isPresent(), "The administrator should exist");
         Administrator admin = result.get();
-        assertEquals(expectedAdmin.id, admin.id, "El ID debe coincidir");
-        assertEquals(expectedAdmin.user_id, admin.user_id, "El user_id debe coincidir");
-        assertEquals(expectedAdmin.name, admin.name, "El nombre debe coincidir");
+        assertEquals(expectedAdmin.id, admin.id, "The ID should match");
+        assertEquals(expectedAdmin.user_id, admin.user_id, "The user_id should match");
+        assertEquals(expectedAdmin.name, admin.name, "The name should match");
     }
 
+    /**
+     * Tests that {@code getAdministratorById(long)} returns an empty Optional when no administrator is found.
+     * <p>
+     * It simulates the jdbcTemplate throwing an EmptyResultDataAccessException, and verifies that the returned Optional is empty.
+     * </p>
+     */
     @Test
     public void testGetAdministratorById_notFound() {
         // Arrange
@@ -149,26 +194,40 @@ public class AdministratorJdbcRepositoryTest {
         Optional<Administrator> result = administratorRepository.getAdministratorById(id);
 
         // Assert
-        assertFalse(result.isPresent(), "No se debe encontrar el administrador");
+        assertFalse(result.isPresent(), "The administrator should not be found");
     }
 
+    /**
+     * Tests that {@code createAdministrator(Administrator)} successfully creates an administrator.
+     * <p>
+     * It stubs the SimpleJdbcInsert to return a generated key, then verifies that the parameters passed to the insert
+     * match the properties of the new administrator.
+     * </p>
+     */
     @Test
     public void testCreateAdministrator() {
         // Arrange
-        Administrator newAdmin = new Administrator(0L, 5L, "AdminNew"); // id se genera en la inserción
+        Administrator newAdmin = new Administrator(0L, 5L, "AdminNew"); // ID is generated on insertion.
         when(insert.executeAndReturnKey(any(MapSqlParameterSource.class))).thenReturn(1L);
 
         // Act
         administratorRepository.createAdministrator(newAdmin);
 
-        // Assert: capturamos los parámetros pasados al insert
+        // Assert: Capture the parameters passed to the insert.
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(insert).executeAndReturnKey(captor.capture());
         MapSqlParameterSource actualParams = captor.getValue();
-        assertEquals(newAdmin.name, actualParams.getValue("name"), "El nombre debe coincidir");
-        assertEquals(newAdmin.user_id, actualParams.getValue("user_id"), "El user_id debe coincidir");
+        assertEquals(newAdmin.name, actualParams.getValue("name"), "The name should match");
+        assertEquals(newAdmin.user_id, actualParams.getValue("user_id"), "The user_id should match");
     }
 
+    /**
+     * Tests that {@code updateAdministrator(Administrator, long)} updates an administrator correctly.
+     * <p>
+     * It stubs the jdbcTemplate update method to return the number of rows updated, then verifies that the method returns
+     * the expected value and that the correct parameters were passed.
+     * </p>
+     */
     @Test
     public void testUpdateAdministrator() {
         // Arrange
@@ -181,16 +240,22 @@ public class AdministratorJdbcRepositoryTest {
         int rowsUpdated = administratorRepository.updateAdministrator(adminToUpdate, userId);
 
         // Assert
-        assertEquals(1, rowsUpdated, "Se debe actualizar 1 fila");
+        assertEquals(1, rowsUpdated, "One row should be updated");
 
-        // Verificamos los parámetros enviados en la actualización
+        // Verify the parameters sent in the update
         ArgumentCaptor<MapSqlParameterSource> captor = ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(jdbcTemplate).update(eq(sql), captor.capture());
         MapSqlParameterSource actualParams = captor.getValue();
-        assertEquals(adminToUpdate.name, actualParams.getValue("name"), "El nombre debe coincidir");
-        assertEquals(userId, actualParams.getValue("userId"), "El userId debe coincidir");
+        assertEquals(adminToUpdate.name, actualParams.getValue("name"), "The name should match");
+        assertEquals(userId, actualParams.getValue("userId"), "The userId should match");
     }
 
+    /**
+     * Tests that {@code getAdministratorByUserId(long)} returns the correct administrator when found.
+     * <p>
+     * It simulates the repository returning an administrator for a given userId (as long) and verifies that the Optional is present.
+     * </p>
+     */
     @Test
     public void testGetAdministratorByUserIdLong_found() {
         // Arrange
@@ -204,13 +269,19 @@ public class AdministratorJdbcRepositoryTest {
         Optional<Administrator> result = administratorRepository.getAdministratorByUserId(userId);
 
         // Assert
-        assertTrue(result.isPresent(), "El administrador debe existir");
+        assertTrue(result.isPresent(), "The administrator should exist");
         Administrator admin = result.get();
-        assertEquals(expectedAdmin.id, admin.id, "El ID debe coincidir");
-        assertEquals(expectedAdmin.user_id, admin.user_id, "El user_id debe coincidir");
-        assertEquals(expectedAdmin.name, admin.name, "El nombre debe coincidir");
+        assertEquals(expectedAdmin.id, admin.id, "The ID should match");
+        assertEquals(expectedAdmin.user_id, admin.user_id, "The user_id should match");
+        assertEquals(expectedAdmin.name, admin.name, "The name should match");
     }
 
+    /**
+     * Tests that {@code getAdministratorByUserId(long)} returns an empty Optional when no administrator is found.
+     * <p>
+     * It simulates the repository throwing an EmptyResultDataAccessException and verifies that the result is empty.
+     * </p>
+     */
     @Test
     public void testGetAdministratorByUserIdLong_notFound() {
         // Arrange
@@ -224,6 +295,6 @@ public class AdministratorJdbcRepositoryTest {
         Optional<Administrator> result = administratorRepository.getAdministratorByUserId(userId);
 
         // Assert
-        assertFalse(result.isPresent(), "No se debe encontrar el administrador");
+        assertFalse(result.isPresent(), "The administrator should not be found");
     }
 }

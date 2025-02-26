@@ -1,5 +1,6 @@
 package com.alfre.DHHotel.controller;
 
+import com.alfre.DHHotel.adapter.web.controller.ReservationController;
 import com.alfre.DHHotel.domain.model.Payment;
 import com.alfre.DHHotel.domain.model.Reservation;
 import com.alfre.DHHotel.domain.model.User;
@@ -28,6 +29,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the reservations operations controller.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class ReservationControllerTest {
 
@@ -35,22 +42,31 @@ public class ReservationControllerTest {
     private ReservationUseCase reservationUseCase;
 
     @InjectMocks
-    private com.alfre.DHHotel.adapter.web.controller.ReservationController reservationController;
+    private ReservationController reservationController;
 
     private MockMvc mockMvc;
 
+    /**
+     * Sets up the testing environment before each test by configuring MockMvc
+     * with a standalone setup for the reservationController.
+     */
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(reservationController).build();
     }
 
+    /**
+     * Tests that when retrieving all reservations, the API returns a list of reservations successfully.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetAllReservations_success_thenReturnsReservationList() throws Exception {
-        // Preparar
+        // Prepare test data
         List<Reservation> reservationList = Arrays.asList(new Reservation(), new Reservation());
         when(reservationUseCase.getAllReservations()).thenReturn(reservationList);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/admin/reservations").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -60,12 +76,17 @@ public class ReservationControllerTest {
         verify(reservationUseCase, times(1)).getAllReservations();
     }
 
+    /**
+     * Tests that when no reservations exist, the API returns a 404 Not Found status with an appropriate message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetAllReservations_failure_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Prepare test data
         when(reservationUseCase.getAllReservations()).thenReturn(Collections.emptyList());
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/admin/reservations").with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("No hay reservas registradas en el sistema."))
@@ -74,15 +95,19 @@ public class ReservationControllerTest {
         verify(reservationUseCase).getAllReservations();
     }
 
+    /**
+     * Tests that retrieving a reservation by a valid ID returns the reservation details successfully.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetReservationById_success_thenReturnsReservation() throws Exception {
-        // Preparar
+        // Prepare test data
         int reservationId = 1;
         Reservation reservation = new Reservation();
-
         when(reservationUseCase.getReservationById(reservationId)).thenReturn(Optional.of(reservation));
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/admin/reservation/{id}", reservationId).with(csrf()))
                 .andExpect(status().isOk())
                 .andDo(print());
@@ -90,26 +115,36 @@ public class ReservationControllerTest {
         verify(reservationUseCase).getReservationById(reservationId);
     }
 
+    /**
+     * Tests that retrieving a reservation by an invalid ID returns a 404 Not Found status with an error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetReservationById_notFound_thenReturns404() throws Exception {
-        // Preparar
+        // Prepare test data
         int nonExistentId = 999;
         when(reservationUseCase.getReservationById(nonExistentId)).thenReturn(Optional.empty());
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/admin/reservation/{id}", nonExistentId).with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("La reserva solicitada no existe"))
                 .andDo(print());
     }
 
+    /**
+     * Tests that when a client requests their reservations and reservations exist, the API returns the correct list.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetReservationsByClient_success_thenReturnsReservationList() throws Exception {
-        // Preparar
+        // Prepare test data
         List<Reservation> reservations = Arrays.asList(new Reservation(), new Reservation());
         when(reservationUseCase.getReservationsByClient(any(User.class))).thenReturn(reservations);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/client/reservations/my")
                         .with(csrf())
                         .principal(() -> "dummyUser"))
@@ -120,12 +155,18 @@ public class ReservationControllerTest {
         verify(reservationUseCase).getReservationsByClient(any(User.class));
     }
 
+    /**
+     * Tests that when a client has no associated reservations, the API returns a 404 Not Found status with an
+     * appropriate message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetReservationsByClient_failure_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Prepare test data
         when(reservationUseCase.getReservationsByClient(any(User.class))).thenReturn(Collections.emptyList());
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/client/reservations/my")
                         .with(csrf())
                         .principal(() -> "dummyUser"))
@@ -137,13 +178,18 @@ public class ReservationControllerTest {
         verify(reservationUseCase).getReservationsByClient(any(User.class));
     }
 
+    /**
+     * Tests that creating a reservation returns a successful response with the reservation's identifier.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenCreateReservation_success_thenReturnsReservation() throws Exception {
-        // Se simula que el caso de uso devuelve la misma reserva (o una nueva con el identificador asignado)
+        // Simulate that the use case returns a new reservation id
         when(reservationUseCase.createReservation(any(Reservation.class), any(User.class)))
                 .thenReturn(1L);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(post("/api/client/reservation")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -155,13 +201,19 @@ public class ReservationControllerTest {
         verify(reservationUseCase).createReservation(any(Reservation.class), any(User.class));
     }
 
+    /**
+     * Tests that when an error occurs during the creation of a reservation, the API returns a 400 Bad Request
+     * status with an error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenCreateReservation_failure_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Prepare test data
         when(reservationUseCase.createReservation(any(Reservation.class), any(User.class)))
                 .thenThrow(new RuntimeException("Error creando reserva"));
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(post("/api/client/reservation")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -172,15 +224,19 @@ public class ReservationControllerTest {
                 .andDo(print());
     }
 
+    /**
+     * Tests that updating a reservation successfully returns a 200 OK status with a success message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenUpdateReservation_success_thenReturnsOk() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
-
         when(reservationUseCase.updateReservation(eq(reservationId), any(Reservation.class), any(User.class)))
                 .thenReturn(1);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(put("/api/reservation/{id}", reservationId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -193,15 +249,20 @@ public class ReservationControllerTest {
         verify(reservationUseCase).updateReservation(eq(reservationId), any(Reservation.class), any(User.class));
     }
 
+    /**
+     * Tests that if updating a reservation fails (i.e., no records are updated), the API returns a 500 Internal
+     * Server Error status with a failure message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenUpdateReservation_failure_thenReturnsInternalServerError() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
-
         when(reservationUseCase.updateReservation(eq(reservationId), any(Reservation.class), any(User.class)))
                 .thenReturn(0);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(put("/api/reservation/{id}", reservationId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -212,15 +273,20 @@ public class ReservationControllerTest {
                 .andDo(print());
     }
 
+    /**
+     * Tests that when updating a reservation results in an AccessDeniedException,
+     * the API returns a 403 Forbidden status with the appropriate error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenUpdateReservation_accessDenied_thenReturnsForbidden() throws Exception {
-        // Preparar: Simular que el use case lanza una AccessDeniedException con el mensaje "No autorizado"
+        // Prepare test data: simulate AccessDeniedException with message "No autorizado"
         long reservationId = 1L;
-
         when(reservationUseCase.updateReservation(eq(reservationId), any(Reservation.class), any(User.class)))
                 .thenThrow(new AccessDeniedException("No autorizado"));
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(put("/api/reservation/{id}", reservationId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -233,15 +299,20 @@ public class ReservationControllerTest {
         verify(reservationUseCase).updateReservation(eq(reservationId), any(Reservation.class), any(User.class));
     }
 
+    /**
+     * Tests that when an exception is thrown during reservation update,
+     * the API returns a 400 Bad Request status with the error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenUpdateReservation_exception_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
-
         when(reservationUseCase.updateReservation(eq(reservationId), any(Reservation.class), any(User.class)))
                 .thenThrow(new RuntimeException("Error actualizando reserva"));
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(put("/api/reservation/{id}", reservationId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -252,13 +323,18 @@ public class ReservationControllerTest {
                 .andDo(print());
     }
 
+    /**
+     * Tests that cancelling a reservation successfully returns a 200 OK status with a success message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenCancelReservation_success_thenReturnsOk() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
         when(reservationUseCase.cancelReservation(reservationId)).thenReturn(1);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(delete("/api/admin/reservation/{id}", reservationId).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("La cancelación se ha hecho correctamente"))
@@ -267,13 +343,19 @@ public class ReservationControllerTest {
         verify(reservationUseCase).cancelReservation(reservationId);
     }
 
+    /**
+     * Tests that if cancellation of a reservation fails,
+     * the API returns a 500 Internal Server Error status with an error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenCancelReservation_failure_thenReturnsInternalServerError() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 999L;
         when(reservationUseCase.cancelReservation(reservationId)).thenReturn(0);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(delete("/api/admin/reservation/{id}", reservationId).with(csrf()))
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().string("No se ha podido actualizar."))
@@ -282,28 +364,39 @@ public class ReservationControllerTest {
         verify(reservationUseCase).cancelReservation(reservationId);
     }
 
+    /**
+     * Tests that when an exception occurs during reservation cancellation,
+     * the API returns a 400 Bad Request status with the error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenCancelReservation_exception_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
         when(reservationUseCase.cancelReservation(reservationId))
                 .thenThrow(new RuntimeException("Error cancelando reserva"));
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(delete("/api/admin/reservation/{id}", reservationId).with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Error cancelando reserva"))
                 .andDo(print());
     }
 
+    /**
+     * Tests that creating a payment for a reservation returns a successful response with the payment's identifier.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenCreatePaymentOfReservation_success_thenReturnsPayment() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
         when(reservationUseCase.createPayment(any(Payment.class), eq(reservationId), any(User.class)))
                 .thenReturn(2L);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(post("/api/admin/reservation/{id}/payment", reservationId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -315,14 +408,20 @@ public class ReservationControllerTest {
         verify(reservationUseCase).createPayment(any(Payment.class), eq(reservationId), any(User.class));
     }
 
+    /**
+     * Tests that when an error occurs during the creation of a payment for a reservation,
+     * the API returns a 400 Bad Request status with an error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenCreatePaymentOfReservation_failure_thenReturnsBadRequest() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
         when(reservationUseCase.createPayment(any(Payment.class), eq(reservationId), any(User.class)))
                 .thenThrow(new RuntimeException("Error creando pago"));
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(post("/api/admin/reservation/{id}/payment", reservationId)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -333,14 +432,20 @@ public class ReservationControllerTest {
                 .andDo(print());
     }
 
+    /**
+     * Tests that retrieving payments for a given reservation returns a successful response
+     * with the correct list of payments.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetPaymentsByClient_success_thenReturnsPaymentList() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
         List<Payment> payments = Arrays.asList(new Payment(), new Payment());
         when(reservationUseCase.getPaymentsByClient(reservationId)).thenReturn(payments);
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/admin/reservations/{id}/payments", reservationId).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
@@ -349,17 +454,22 @@ public class ReservationControllerTest {
         verify(reservationUseCase).getPaymentsByClient(reservationId);
     }
 
+    /**
+     * Tests that when no payments are found for a given reservation,
+     * the API returns a 404 Not Found status with an appropriate error message.
+     *
+     * @throws Exception if an error occurs during test execution.
+     */
     @Test
     public void whenGetPaymentsByClient_failure_thenReturnsNotFound() throws Exception {
-        // Preparar
+        // Prepare test data
         long reservationId = 1L;
         when(reservationUseCase.getPaymentsByClient(reservationId)).thenReturn(Collections.emptyList());
 
-        // Ejecutar y Verificar
+        // Execute and Verify
         mockMvc.perform(get("/api/admin/reservations/{id}/payments", reservationId).with(csrf()))
                 .andExpect(status().isNotFound())
-                .andExpect(content()
-                        .string("No hay pagos asociados al cliente registrados en el sistema."))
+                .andExpect(content().string("No hay pagos asociados al cliente registrados en el sistema."))
                 .andDo(print());
 
         verify(reservationUseCase).getPaymentsByClient(reservationId);

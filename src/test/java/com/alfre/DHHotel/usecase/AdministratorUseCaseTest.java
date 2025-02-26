@@ -17,6 +17,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * This class contains the attributes and methods for realize the unit tests
+ * of the system administrators business logic.
+ *
+ * @author Alfredo Sobrados González
+ */
 @ExtendWith(MockitoExtension.class)
 public class AdministratorUseCaseTest {
     @Mock
@@ -26,103 +32,152 @@ public class AdministratorUseCaseTest {
 
     private AdministratorUseCase administratorUseCase;
 
+    /**
+     * Sets up the AdministratorUseCase instance before each test.
+     * <p>
+     * This method instantiates the AdministratorUseCase with its required dependencies,
+     * ensuring that each test starts with a fresh use case instance.
+     * </p>
+     */
     @BeforeEach
     public void setup() {
         administratorUseCase = new AdministratorUseCase(administratorRepository, userRepository);
     }
 
+    /**
+     * Tests that {@link AdministratorUseCase#getAllAdministrators()} returns the expected list of administrators.
+     * <p>
+     * The test arranges a list of administrators, stubs the repository to return that list,
+     * invokes the use case method, and verifies that the returned list matches the expected one.
+     * </p>
+     */
     @Test
     public void getAllAdministrators_success() {
-        // Arrange: Preparamos una lista de administradores
+        // Arrange: Prepare a list of administrators
         List<Administrator> adminList = new ArrayList<>();
         Administrator admin = new Administrator();
-        // Configuramos las propiedades de admin si es necesario
+        // Configure admin properties if needed
         adminList.add(admin);
         when(administratorRepository.getAllAdministrators()).thenReturn(adminList);
 
-        // Act: Ejecutamos el método
+        // Act: Execute the method
         List<Administrator> result = administratorUseCase.getAllAdministrators();
 
-        // Assert: Verificamos que el resultado sea el esperado y se llamó al método del repository
+        // Assert: Verify that the result is as expected and the repository method was called
         assertEquals(adminList, result);
         verify(administratorRepository).getAllAdministrators();
     }
 
+    /**
+     * Tests that {@link AdministratorUseCase#getAdministratorByUserId(long)} returns the correct administrator.
+     * <p>
+     * The test stubs the repository to return an Optional containing an administrator for a given user ID,
+     * then verifies that the use case method returns the expected administrator.
+     * </p>
+     */
     @Test
     public void getAdministratorByUserId_success() {
-        // Arrange: Creamos un administrador y simulamos su retorno por el repository
+        // Arrange: Create an administrator and simulate its return by the repository
         Administrator admin = new Administrator();
-        // Configuramos las propiedades de admin si es necesario
+        // Configure admin properties if needed
         when(administratorRepository.getAdministratorByUserId(1L)).thenReturn(Optional.of(admin));
 
-        // Act
+        // Act: Execute the method
         Optional<Administrator> result = administratorUseCase.getAdministratorByUserId(1L);
 
-        // Assert
+        // Assert: Verify that the result is present and equals the expected administrator
         assertTrue(result.isPresent());
         assertEquals(admin, result.get());
         verify(administratorRepository).getAdministratorByUserId(1L);
     }
 
+    /**
+     * Tests that {@link AdministratorUseCase#getAdministratorById(long)} returns the correct administrator.
+     * <p>
+     * The test simulates the repository returning an administrator for a given ID and verifies that
+     * the use case method returns an Optional containing that administrator.
+     * </p>
+     */
     @Test
     public void getAdministratorById_success() {
-        // Arrange: Creamos un administrador y simulamos su retorno para el id dado
+        // Arrange: Create an administrator and simulate its return for the given id
         Administrator admin = new Administrator();
         when(administratorRepository.getAdministratorById(10L)).thenReturn(Optional.of(admin));
 
-        // Act
+        // Act: Execute the method
         Optional<Administrator> result = administratorUseCase.getAdministratorById(10L);
 
-        // Assert
+        // Assert: Verify that the result is present and equals the expected administrator
         assertTrue(result.isPresent());
         assertEquals(admin, result.get());
         verify(administratorRepository).getAdministratorById(10L);
     }
 
+    /**
+     * Tests that {@link AdministratorUseCase#updateAdministrator(Administrator, long)} successfully updates an administrator.
+     * <p>
+     * The test simulates the repository returning 1 (indicating one record updated) when updating the administrator,
+     * then verifies that the use case method returns 1.
+     * </p>
+     */
     @Test
     public void updateAdministrator_success() {
-        // Arrange: Creamos un administrador y simulamos el retorno del update
+        // Arrange: Create an administrator and simulate the update return value
         Administrator admin = new Administrator();
-        // Configuramos las propiedades de admin si es necesario
+        // Configure admin properties if needed
         when(administratorRepository.updateAdministrator(admin, 1L)).thenReturn(1);
 
-        // Act
+        // Act: Execute the update method
         int result = administratorUseCase.updateAdministrator(admin, 1L);
 
-        // Assert
+        // Assert: Verify that the result is 1 and the repository update method was called with the correct parameters
         assertEquals(1, result);
         verify(administratorRepository).updateAdministrator(admin, 1L);
     }
 
+    /**
+     * Tests that {@link AdministratorUseCase#deleteAdministrator(long)} successfully deletes an administrator.
+     * <p>
+     * The test simulates the repository returning an administrator for a given user ID,
+     * stubs the user repository to return 1 when deleting the user, and verifies that the use case returns 1.
+     * </p>
+     */
     @Test
     public void deleteAdministrator_success() {
-        // Arrange: Creamos un administrador y simulamos el retorno del delete
+        // Arrange: Create an administrator and simulate the repository behavior for deletion
         Administrator admin = new Administrator();
         admin.setUser_id(5L);
 
-        // Stubs
+        // Stubs: Simulate successful deletion of the user and retrieval of the administrator
         when(userRepository.deleteUser(admin.user_id)).thenReturn(1);
         when(administratorRepository.getAdministratorById(5L)).thenReturn(Optional.of(admin));
 
-        // Act
-        int result  = administratorUseCase.deleteAdministrator(5L);
+        // Act: Execute the delete method
+        int result = administratorUseCase.deleteAdministrator(5L);
 
-        // Assert
+        // Assert: Verify that the result is 1 and that the user deletion method was invoked
         assertEquals(1, result);
         verify(userRepository).deleteUser(5L);
     }
 
+    /**
+     * Tests that {@link AdministratorUseCase#deleteAdministrator(long)} throws an exception when the administrator does not exist.
+     * <p>
+     * The test simulates the repository returning an empty Optional for a non-existent administrator ID,
+     * and verifies that the use case method throws a RuntimeException with the expected message.
+     * </p>
+     */
     @Test
     public void deleteAdministrator_failure_shouldThrowException() {
-        // Arrange: Configuramos el comportamiento del repository para simular que no existe el administrador.
+        // Arrange: Configure the repository to simulate that the administrator does not exist
         when(administratorRepository.getAdministratorById(7L)).thenReturn(Optional.empty());
 
-        // Act
+        // Act: Attempt to delete the administrator and capture the thrown exception
         Exception exception = assertThrows(RuntimeException.class, () ->
                 administratorUseCase.deleteAdministrator(7L)
         );
 
-        // Assert
+        // Assert: Verify that the exception message is as expected and that the repository method was called
         assertEquals("No existe el administrador que quieres eliminar", exception.getMessage());
         verify(administratorRepository).getAdministratorById(7L);
     }
