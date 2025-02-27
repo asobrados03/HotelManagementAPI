@@ -85,7 +85,7 @@ INSERT INTO Administrator (user_id, name) VALUES
 (5, 'Super Admin');
 
 -- Insert data into Rooms Table
-INSERT INTO Room (room_number, type, price_per_night, state)
+INSERT INTO Room (room_number, type, price_per_night, status)
 VALUES
 (101, 'SINGLE', 50.00, 'AVAILABLE'),
 (102, 'DOUBLE', 80.00, 'OCCUPIED'),
