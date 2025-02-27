@@ -348,7 +348,7 @@ volumes:
 Para iniciar los contenedores, ejecuta en la raíz del proyecto:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Ejecutar la API
