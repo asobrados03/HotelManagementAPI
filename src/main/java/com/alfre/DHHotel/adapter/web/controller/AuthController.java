@@ -26,7 +26,7 @@ import java.util.Map;
  * @author Alfredo Sobrados González
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/auth")
 public class AuthController {
     private final AuthUseCase authUseCase;
     private final ClientUseCase clientUseCase;
