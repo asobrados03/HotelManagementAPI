@@ -17,7 +17,7 @@ import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -147,18 +147,18 @@ public class ReservationJdbcRepository implements ReservationRepository {
      * @throws RuntimeException if a data access error occurs while checking availability
      */
     @Override
-    public boolean isRoomAvailable(Long roomId, Date startDate, Date endDate) {
+    public boolean isRoomAvailable(Long roomId, LocalDate startDate, LocalDate endDate) {
         // Validate input parameters
         if (roomId == null) {
             throw new IllegalArgumentException("El ID de la habitación no puede ser null");
         }
         if (startDate == null) {
-            throw new IllegalArgumentException("La fecha de inicio no puede ser null");
+            throw new IllegalArgumentException("La fecha de entrada no puede ser null");
         }
         if (endDate == null) {
-            throw new IllegalArgumentException("La fecha de fin no puede ser null");
+            throw new IllegalArgumentException("La fecha de salida no puede ser null");
         }
-        if (endDate.before(startDate)) {
+        if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("La fecha de salida no puede ser anterior a la fecha de entrada.");
         }
 
@@ -219,8 +219,8 @@ public class ReservationJdbcRepository implements ReservationRepository {
             long clientId = rs.getInt("client_id");
             long roomId = rs.getInt("room_id");
             BigDecimal totalPrice = rs.getBigDecimal("total_price");
-            Date startDate = rs.getDate("start_date");
-            Date endDate = rs.getDate("end_date");
+            LocalDate startDate = rs.getObject("start_date", LocalDate.class);
+            LocalDate endDate = rs.getObject("end_date", LocalDate.class);
             ReservationStatus status = ReservationStatus.valueOf(rs.getString("status").toUpperCase());
 
             return new Reservation(id, clientId, roomId, totalPrice, startDate, endDate, status);

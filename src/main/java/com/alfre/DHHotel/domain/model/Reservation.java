@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * Entity class representing a reservation.
@@ -46,12 +46,12 @@ public class Reservation {
     /**
      * The start date of the reservation.
      */
-    public Date start_date;
+    public LocalDate start_date;
 
     /**
      * The end date of the reservation.
      */
-    public Date end_date;
+    public LocalDate end_date;
 
     /**
      * The current status of the reservation (e.g., CONFIRMED, PENDING, CANCELED).

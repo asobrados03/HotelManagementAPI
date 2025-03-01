@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * Entity class representing a payment.
@@ -41,7 +41,7 @@ public class Payment {
     /**
      * The date when the payment was made.
      */
-    public Date payment_date;
+    public LocalDate payment_date;
 
     /**
      * The method used for the payment (CARD, CASH, TRANSFER).

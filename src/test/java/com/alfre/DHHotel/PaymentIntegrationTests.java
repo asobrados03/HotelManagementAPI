@@ -23,8 +23,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -159,8 +157,8 @@ public class PaymentIntegrationTests {
         reservation.setStatus(ReservationStatus.PENDING);
         reservation.setClient_id(clientId);
         reservation.setRoom_id(roomId);
-        reservation.setStart_date(new Date(1000));
-        reservation.setEnd_date(new Date(4000));
+        reservation.setStart_date(LocalDate.now());
+        reservation.setEnd_date(LocalDate.now().plusDays(2));
         testReservationId = reservationRepository.createReservation(reservation);
 
         // Create a payment for the reservation
@@ -169,8 +167,7 @@ public class PaymentIntegrationTests {
         payment.setAmount(new BigDecimal("200.00"));
         payment.setMethod(MethodPayment.CARD);
 
-        LocalDate today = LocalDate.now();
-        payment.setPayment_date(Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        payment.setPayment_date(LocalDate.now());
         testPaymentId = paymentRepository.createPayment(payment);
     }
 

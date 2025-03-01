@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -73,9 +73,9 @@ public class PaymentJdbcRepositoryTest {
     public void testGetAllPayments() {
         // Arrange
         Payment payment1 = new Payment(1L, 100L, BigDecimal.valueOf(150.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CARD);
+                LocalDate.now(), MethodPayment.CARD);
         Payment payment2 = new Payment(2L, 101L, BigDecimal.valueOf(200.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CASH);
+                LocalDate.now(), MethodPayment.CASH);
         List<Payment> payments = Arrays.asList(payment1, payment2);
 
         String sql = "SELECT * FROM " + table;
@@ -112,7 +112,7 @@ public class PaymentJdbcRepositoryTest {
         // Arrange
         long id = 1L;
         Payment expectedPayment = new Payment(id, 100L, BigDecimal.valueOf(150.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CARD);
+                LocalDate.now(), MethodPayment.CARD);
         String sql = "SELECT * FROM " + table + " WHERE id = :id";
 
         when(jdbcTemplate.queryForObject(eq(sql), any(MapSqlParameterSource.class),
@@ -167,9 +167,9 @@ public class PaymentJdbcRepositoryTest {
         // Arrange
         long reservationId = 100L;
         Payment payment1 = new Payment(1L, reservationId, BigDecimal.valueOf(150.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CARD);
+                LocalDate.now(), MethodPayment.CARD);
         Payment payment2 = new Payment(2L, reservationId, BigDecimal.valueOf(200.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CASH);
+                LocalDate.now(), MethodPayment.CASH);
         List<Payment> payments = Arrays.asList(payment1, payment2);
 
         String sql = "SELECT * FROM " + table + " WHERE reservation_id = :reservationId";
@@ -201,7 +201,7 @@ public class PaymentJdbcRepositoryTest {
     public void testCreatePayment() {
         // Arrange
         Payment payment = new Payment(0L, 100L, BigDecimal.valueOf(150.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CARD);
+                LocalDate.now(), MethodPayment.CARD);
         when(insert.executeAndReturnKey(any(MapSqlParameterSource.class))).thenReturn(1L);
 
         // Act
@@ -231,10 +231,10 @@ public class PaymentJdbcRepositoryTest {
     public void testUpdatePayment() {
         // Arrange
         Payment payment = new Payment(1L, 100L, BigDecimal.valueOf(150.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CARD);
+                LocalDate.now(), MethodPayment.CARD);
         // Update some fields
         payment.amount = BigDecimal.valueOf(175.00);
-        payment.payment_date = new Date(System.currentTimeMillis());
+        payment.payment_date = LocalDate.now();
 
         String sql = "UPDATE " + table + " SET amount = :amount, payment_date = :paymentDate, method = :method" +
                 " WHERE id = :id";
@@ -341,9 +341,9 @@ public class PaymentJdbcRepositoryTest {
         // Arrange
         long clientId = 200L;
         Payment payment1 = new Payment(1L, 100L, BigDecimal.valueOf(150.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CARD);
+                LocalDate.now(), MethodPayment.CARD);
         Payment payment2 = new Payment(2L, 101L, BigDecimal.valueOf(200.00),
-                new Date(System.currentTimeMillis()), MethodPayment.CASH);
+                LocalDate.now(), MethodPayment.CASH);
         List<Payment> payments = Arrays.asList(payment1, payment2);
 
         String sql = """

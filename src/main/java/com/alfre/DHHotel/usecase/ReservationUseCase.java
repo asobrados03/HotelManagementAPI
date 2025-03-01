@@ -14,9 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,8 +83,17 @@ public class ReservationUseCase {
         }
 
         BigDecimal totalPrice = calculateTotal(newReservation.start_date, newReservation.end_date, newReservation.room_id);
+
         if (totalPrice.compareTo(BigDecimal.valueOf(-1.0)) == 0) {
-            throw new RuntimeException("Error al calcular el precio total de la reserva.");
+            if (newReservation.start_date.equals(newReservation.end_date)) {
+                throw new RuntimeException("La fecha de entrada y salida no pueden ser el mismo día. Debe haber al" +
+                        " menos una noche de estancia.");
+            } else if (newReservation.end_date.isBefore(newReservation.start_date)) {
+                throw new RuntimeException("La fecha de salida no puede ser anterior a la fecha de entrada.");
+            } else {
+                throw new RuntimeException("Error al calcular el precio total de la reserva. Verifica las fechas y el" +
+                        " precio de la habitación o si la habitación realmente existe.");
+            }
         }
 
         newReservation.setTotal_price(totalPrice);
@@ -99,7 +106,7 @@ public class ReservationUseCase {
 
         if (user.role == Role.CLIENT) {
             Client client = clientRepository.getClientByUserId(user.id)
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado."));
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado en la base de datos."));
             newReservation.setClient_id(client.id);
         }
 
@@ -115,15 +122,12 @@ public class ReservationUseCase {
      * @param roomId The ID of the room.
      * @return The total reservation price.
      */
-    public BigDecimal calculateTotal(Date startDate, Date endDate, long roomId) {
+    public BigDecimal calculateTotal(LocalDate startDate, LocalDate endDate, long roomId) {
         if (startDate == null || endDate == null) {
             return BigDecimal.valueOf(-1.0);
         }
 
-        LocalDate checkIn = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate checkOut = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
-        if (checkOut.isBefore(checkIn) || checkIn.equals(checkOut)) {
+        if (endDate.isBefore(startDate) || startDate.equals(endDate)) {
             return BigDecimal.valueOf(-1.0);
         }
 
@@ -135,7 +139,7 @@ public class ReservationUseCase {
             return BigDecimal.valueOf(-1.0);
         }
 
-        long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
+        long nights = ChronoUnit.DAYS.between(startDate, endDate);
         return pricePerNight.multiply(BigDecimal.valueOf(nights));
     }
 
@@ -154,7 +158,7 @@ public class ReservationUseCase {
 
         if (user.role == Role.CLIENT) {
             Client client = clientRepository.getClientByUserId(user.id)
-                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
+                    .orElseThrow(() -> new RuntimeException("Cliente no encontrado para validar la autorización"));
 
             if (reservation.client_id != client.id) {
                 throw new AccessDeniedException("No autorizado");
@@ -162,15 +166,20 @@ public class ReservationUseCase {
         }
 
         if (reservation.status != ReservationStatus.PENDING && user.role == Role.CLIENT) {
-            throw new RuntimeException("No se pueden modificar reservas canceladas o confirmadas.");
+            throw new RuntimeException("No se pueden modificar reservas canceladas o confirmadas si eres cliente.");
         }
 
+        if (updatedReservation.start_date == null || updatedReservation.end_date == null) {
+            throw new RuntimeException("Hay que indicar las fechas de inicio y salida de la reserva");
+        }
+
+        reservation.setRoom_id(updatedReservation.room_id);
         reservation.setStart_date(updatedReservation.start_date);
         reservation.setEnd_date(updatedReservation.end_date);
 
         BigDecimal totalPrice = calculateTotal(reservation.start_date, reservation.end_date, reservation.room_id);
         if (totalPrice.compareTo(BigDecimal.valueOf(-1.0)) == 0) {
-            throw new RuntimeException("Fechas de la reserva erróneas.");
+            throw new RuntimeException("Fechas de inicio y salida de la reserva erróneas.");
         }
 
         reservation.setTotal_price(totalPrice);
@@ -221,11 +230,12 @@ public class ReservationUseCase {
         BigDecimal paidTotal = paymentRepository.getTotalPaid(reservationId);
         BigDecimal remaining = reservation.total_price.subtract(paidTotal);
 
-        if (newPayment.amount.compareTo(remaining) > 0) {
+        if (newPayment.amount.compareTo(remaining) > 0 && reservation.status == ReservationStatus.CONFIRMED) {
+            throw new RuntimeException("El pago no se ha realizado ya que la reserva ya está pagada y confirmada");
+        } else if (newPayment.amount.compareTo(remaining) > 0) {
             throw new RuntimeException("El pago excede el monto pendiente");
         }
 
-        newPayment.setPayment_date(new Date());
         newPayment.setReservation_id(reservationId);
         long savedPaymentId = paymentRepository.createPayment(newPayment);
 

@@ -1,10 +1,8 @@
 package com.alfre.DHHotel.controller;
 
 import com.alfre.DHHotel.adapter.web.controller.ClientController;
-import com.alfre.DHHotel.domain.model.Administrator;
 import com.alfre.DHHotel.domain.model.Client;
 import com.alfre.DHHotel.usecase.ClientUseCase;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -163,7 +161,7 @@ public class ClientControllerTest {
         mockMvc.perform(delete("/api/admin/client/{id}", clientId)
                         .with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Cliente con id: " + clientId + "eliminado correctamente."))
+                .andExpect(content().string("Cliente con id: " + clientId + " eliminado correctamente."))
                 .andDo(print());
 
         verify(clientUseCase).deleteClient(clientId);

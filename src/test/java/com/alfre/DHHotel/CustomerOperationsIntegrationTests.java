@@ -272,7 +272,7 @@ public class CustomerOperationsIntegrationTests {
         mockMvc.perform(delete("/api/admin/client/" + newClient.id)
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Cliente con id: " + newClient.id + "eliminado correctamente."));
+                .andExpect(content().string("Cliente con id: " + newClient.id + " eliminado correctamente."));
 
         // Verify deletion in the repository
         assertThat(clientRepository.getClientById(newClient.id)).isEmpty();

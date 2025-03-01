@@ -10,8 +10,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -113,7 +113,7 @@ public class PaymentUseCaseTest {
         // Updated data: new amount, payment date, and method.
         Payment updatedPayment = new Payment();
         updatedPayment.amount = new BigDecimal("50.00");
-        updatedPayment.payment_date = new Date();
+        updatedPayment.payment_date = LocalDate.now();
         updatedPayment.method = MethodPayment.CARD;
 
         // Stub: payment exists.
@@ -232,7 +232,7 @@ public class PaymentUseCaseTest {
 
         Payment updatedPayment = new Payment();
         updatedPayment.amount = null; // Amount not updated
-        updatedPayment.payment_date = new Date();
+        updatedPayment.payment_date = LocalDate.now();
         updatedPayment.method = MethodPayment.CARD;
 
         when(paymentRepository.getPaymentById(id)).thenReturn(Optional.of(payment));
@@ -272,7 +272,7 @@ public class PaymentUseCaseTest {
 
         Payment updatedPayment = new Payment();
         updatedPayment.amount = new BigDecimal("50.00");
-        updatedPayment.payment_date = new Date();
+        updatedPayment.payment_date = LocalDate.now();
         updatedPayment.method = MethodPayment.CASH;
 
         when(paymentRepository.getPaymentById(id)).thenReturn(Optional.of(payment));
@@ -312,7 +312,7 @@ public class PaymentUseCaseTest {
 
         Payment updatedPayment = new Payment();
         updatedPayment.amount = new BigDecimal("50.00");
-        updatedPayment.payment_date = new Date();
+        updatedPayment.payment_date = LocalDate.now();
         updatedPayment.method = MethodPayment.TRANSFER;
 
         when(paymentRepository.getPaymentById(id)).thenReturn(Optional.of(payment));
@@ -352,7 +352,7 @@ public class PaymentUseCaseTest {
 
         Payment updatedPayment = new Payment();
         updatedPayment.amount = new BigDecimal("50.00");
-        updatedPayment.payment_date = new Date();
+        updatedPayment.payment_date = LocalDate.now();
         updatedPayment.method = MethodPayment.CASH;
 
         when(paymentRepository.getPaymentById(id)).thenReturn(Optional.of(payment));
@@ -472,6 +472,7 @@ public class PaymentUseCaseTest {
         Reservation reservation = new Reservation();
         reservation.id = 100L;
         reservation.total_price = new BigDecimal("100.00");
+        reservation.setStatus(ReservationStatus.CONFIRMED);
         when(reservationRepository.getReservationById(payment.reservation_id))
                 .thenReturn(Optional.of(reservation));
 

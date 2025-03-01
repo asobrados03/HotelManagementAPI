@@ -10,8 +10,13 @@ server.error.include-message: always
 management.endpoints.web.exposure.include: '*'
 
 spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: "yyyy-MM-dd"  # Opcional: formato de fechas
   application:
     name: DHHotel
+
 
 datasource:
   my-connection:

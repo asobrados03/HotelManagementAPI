@@ -2,7 +2,7 @@ package com.alfre.DHHotel.domain.repository;
 
 import com.alfre.DHHotel.domain.model.Reservation;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +63,7 @@ public interface ReservationRepository {
      * @param endDate the end date of the reservation.
      * @return {@code true} if the room is available, {@code false} otherwise.
      */
-    boolean isRoomAvailable(Long roomId, Date startDate, Date endDate);
+    boolean isRoomAvailable(Long roomId, LocalDate startDate, LocalDate endDate);
 
     /**
      * Deletes all reservation records from the system.

@@ -252,7 +252,7 @@ public class RoomJdbcRepositoryTest {
         Room room1 = new Room(1L, 101, RoomType.SINGLE, BigDecimal.valueOf(100.0), available);
         List<Room> rooms = List.of(room1);
 
-        String sql = "SELECT * FROM " + table + " WHERE state = :state";
+        String sql = "SELECT * FROM " + table + " WHERE status = :status";
 
         when(jdbcTemplate.query(eq(sql), any(MapSqlParameterSource.class), any(RoomJdbcRepository.RoomMapper.class)))
                 .thenReturn(rooms);

@@ -14,9 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -237,7 +235,7 @@ public class ReservationUseCaseTest {
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
         // Simulate a reservation requested for the same day
-        Date sameDay = new Date(1000L);
+        LocalDate sameDay = LocalDate.now();
         newReservation.setStart_date(sameDay);
         newReservation.setEnd_date(sameDay);
 
@@ -266,8 +264,8 @@ public class ReservationUseCaseTest {
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
         // Set dates: end date is before start date
-        Date startDate = new Date(2000L);
-        Date endDate = new Date(1000L);
+        LocalDate startDate = LocalDate.now().plusDays(5);
+        LocalDate endDate = LocalDate.now();
         newReservation.setStart_date(startDate);
         newReservation.setEnd_date(endDate);
 
@@ -295,8 +293,8 @@ public class ReservationUseCaseTest {
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
         // Set valid dates (different and with end_date after start_date)
-        Date startDate = new Date(1000L);
-        Date endDate = new Date(2000L);
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
         newReservation.setStart_date(startDate);
         newReservation.setEnd_date(endDate);
 
@@ -325,8 +323,8 @@ public class ReservationUseCaseTest {
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
         // Set valid dates
-        Date startDate = new Date(1000L);
-        Date endDate = new Date(2000L);
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
         newReservation.setStart_date(startDate);
         newReservation.setEnd_date(endDate);
 
@@ -357,8 +355,8 @@ public class ReservationUseCaseTest {
         // Arrange
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
-        Date startDate = new Date(1000L);
-        Date endDate = new Date(2000L);
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
         newReservation.setStart_date(startDate);
         newReservation.setEnd_date(endDate);
 
@@ -376,7 +374,7 @@ public class ReservationUseCaseTest {
         Exception ex = assertThrows(RuntimeException.class, () ->
                 reservationUseCase.createReservation(newReservation, user));
         assertEquals("Error interno.", ex.getMessage());
-        verify(roomRepository).getRoomById(newReservation.room_id);
+        verify(roomRepository, times(2)).getRoomById(newReservation.room_id);
     }
 
     /**
@@ -387,8 +385,8 @@ public class ReservationUseCaseTest {
         // Arrange
         Reservation newReservation = new Reservation();
         newReservation.setRoom_id(2L);
-        Date startDate = new Date(1000L);
-        Date endDate = new Date(2000L);
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
         newReservation.setStart_date(startDate);
         newReservation.setEnd_date(endDate);
 
@@ -422,7 +420,7 @@ public class ReservationUseCaseTest {
     @Test
     public void calculateTotal_startDateNull_returnsMinusOne() {
         // Arrange
-        Date endDate = new Date();
+        LocalDate endDate = LocalDate.now();
         long roomId = 1L;
 
         // Act & Assert
@@ -436,7 +434,7 @@ public class ReservationUseCaseTest {
     @Test
     public void calculateTotal_endDateNull_returnsMinusOne() {
         // Arrange
-        Date startDate = new Date();
+        LocalDate startDate = LocalDate.now();
         long roomId = 1L;
 
         // Act & Assert
@@ -451,10 +449,8 @@ public class ReservationUseCaseTest {
     public void calculateTotal_endDateBeforeStartDate_returnsMinusOne() {
         // Arrange
         // Set startDate as today and endDate as yesterday
-        LocalDate today = LocalDate.now();
-        LocalDate yesterday = today.minusDays(1);
-        Date startDate = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(yesterday.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().minusDays(1);
         long roomId = 1L;
 
         // Act & Assert
@@ -468,9 +464,8 @@ public class ReservationUseCaseTest {
     @Test
     public void calculateTotal_sameDay_returnsMinusOne() {
         // Arrange
-        LocalDate today = LocalDate.now();
-        Date startDate = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now();
         long roomId = 1L;
 
         // Act & Assert
@@ -484,10 +479,8 @@ public class ReservationUseCaseTest {
     @Test
     public void calculateTotal_roomPriceZero_returnsMinusOne() {
         // Arrange
-        LocalDate checkIn = LocalDate.now().plusDays(1);
-        LocalDate checkOut = checkIn.plusDays(1);
-        Date startDate = Date.from(checkIn.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(checkOut.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDate startDate = LocalDate.now().plusDays(1);
+        LocalDate endDate = startDate.plusDays(1);
         long roomId = 1L;
 
         Room room = new Room();
@@ -505,10 +498,8 @@ public class ReservationUseCaseTest {
     @Test
     public void calculateTotal_roomNotFound_returnsMinusOne() {
         // Arrange
-        LocalDate checkIn = LocalDate.now().plusDays(1);
-        LocalDate checkOut = checkIn.plusDays(1);
-        Date startDate = Date.from(checkIn.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(checkOut.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDate startDate = LocalDate.now().plusDays(1);
+        LocalDate endDate = startDate.plusDays(1);
         long roomId = 1L;
 
         when(roomRepository.getRoomById(roomId)).thenReturn(Optional.empty());
@@ -524,10 +515,8 @@ public class ReservationUseCaseTest {
     @Test
     public void calculateTotal_oneNight_returnsPricePerNight() {
         // Arrange
-        LocalDate checkIn = LocalDate.of(2023, 3, 1);
-        LocalDate checkOut = checkIn.plusDays(1); // 1 night
-        Date startDate = Date.from(checkIn.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(checkOut.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDate startDate = LocalDate.of(2023, 3, 1);
+        LocalDate endDate = startDate.plusDays(1); // 1 night
         long roomId = 1L;
 
         Room room = new Room();
@@ -546,10 +535,8 @@ public class ReservationUseCaseTest {
     public void calculateTotal_multipleNights_returnsTotalPrice() {
         // Arrange
         // Example: checkIn = 2023-03-01, checkOut = 2023-03-05 → 4 nights
-        LocalDate checkIn = LocalDate.of(2023, 3, 1);
-        LocalDate checkOut = checkIn.plusDays(4);
-        Date startDate = Date.from(checkIn.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        Date endDate = Date.from(checkOut.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        LocalDate startDate = LocalDate.of(2023, 3, 1);
+        LocalDate endDate = startDate.plusDays(4);
         long roomId = 1L;
 
         Room room = new Room();
@@ -593,8 +580,8 @@ public class ReservationUseCaseTest {
         reservation.status = ReservationStatus.PENDING;
         Reservation updatedReservation = new Reservation();
         // Dates must be provided to avoid date check failures
-        updatedReservation.start_date = new Date(1000L);
-        updatedReservation.end_date = new Date(2000L);
+        updatedReservation.start_date = LocalDate.now();
+        updatedReservation.end_date = LocalDate.now().plusDays(2);
 
         User user = new User();
         user.id = 5L;
@@ -621,8 +608,8 @@ public class ReservationUseCaseTest {
         reservation.client_id = 10L; // Reservation belongs to client 10
         reservation.status = ReservationStatus.PENDING;
         Reservation updatedReservation = new Reservation();
-        updatedReservation.start_date = new Date(1000L);
-        updatedReservation.end_date = new Date(2000L);
+        updatedReservation.start_date = LocalDate.now();
+        updatedReservation.end_date = LocalDate.now().plusDays(2);
 
         User user = new User();
         user.id = 5L;
@@ -651,8 +638,8 @@ public class ReservationUseCaseTest {
         reservation.client_id = 10L;
         reservation.status = ReservationStatus.CONFIRMED; // Not pending
         Reservation updatedReservation = new Reservation();
-        updatedReservation.start_date = new Date(1000L);
-        updatedReservation.end_date = new Date(2000L);
+        updatedReservation.start_date = LocalDate.now();
+        updatedReservation.end_date = LocalDate.now().plusDays(2);
 
         User user = new User();
         user.id = 10L;
@@ -682,6 +669,7 @@ public class ReservationUseCaseTest {
         Reservation reservation = new Reservation();
         reservation.client_id = 10L;
         reservation.status = ReservationStatus.PENDING;
+        reservation.room_id = 2L;
         Reservation updatedReservation = new Reservation();
         // start_date and end_date are not set
 
@@ -713,9 +701,9 @@ public class ReservationUseCaseTest {
         reservation.status = ReservationStatus.PENDING;
         reservation.room_id = 2L;
         Reservation updatedReservation = new Reservation();
-        updatedReservation.start_date = new Date(1000L);
-        updatedReservation.end_date = new Date(2000L);
-        // If updatedReservation.room_id is null, the previous one (2L) is kept
+        updatedReservation.start_date = LocalDate.now();
+        updatedReservation.end_date = LocalDate.now().plusDays(2);
+        updatedReservation.room_id = 2L;
 
         User user = new User();
         user.id = 10L;
@@ -749,8 +737,8 @@ public class ReservationUseCaseTest {
         reservation.status = ReservationStatus.PENDING;
         reservation.room_id = 2L;
         // Original dates
-        reservation.start_date = new Date(1000L);
-        reservation.end_date = new Date(2000L);
+        reservation.start_date = LocalDate.now();
+        reservation.end_date = LocalDate.now().plusDays(2);
 
         User user = new User();
         user.id = 10L;
@@ -761,8 +749,8 @@ public class ReservationUseCaseTest {
         // Data to update
         Reservation updatedReservation = new Reservation();
         updatedReservation.room_id = 3L; // changed
-        Date newStart = new Date(3000L);
-        Date newEnd = new Date(4000L);
+        LocalDate newStart = LocalDate.now().plusDays(4);
+        LocalDate newEnd = LocalDate.now().plusDays(6);
         updatedReservation.start_date = newStart;
         updatedReservation.end_date = newEnd;
 
@@ -796,8 +784,8 @@ public class ReservationUseCaseTest {
         // For ADMIN, no client validation is required; only the reservation must exist.
         reservation.status = ReservationStatus.PENDING;
         reservation.room_id = 2L;
-        reservation.start_date = new Date(1000L);
-        reservation.end_date = new Date(2000L);
+        reservation.start_date = LocalDate.now();
+        reservation.end_date = LocalDate.now().plusDays(2);
 
         User user = new User();
         user.id = 20L;
@@ -805,11 +793,11 @@ public class ReservationUseCaseTest {
 
         Reservation updatedReservation = new Reservation();
         // Update only the dates (room_id remains null, so the previous value is kept)
-        Date newStart = new Date(3000L);
-        Date newEnd = new Date(4000L);
+        LocalDate newStart = LocalDate.now().plusDays(4);
+        LocalDate newEnd = LocalDate.now().plusDays(6);
         updatedReservation.start_date = newStart;
         updatedReservation.end_date = newEnd;
-        // updatedReservation.room_id is left null
+        updatedReservation.room_id = 2L;
 
         when(reservationRepository.getReservationById(id)).thenReturn(Optional.of(reservation));
         // For ADMIN, clientRepository is not called
@@ -992,7 +980,7 @@ public class ReservationUseCaseTest {
         Exception ex = assertThrows(RuntimeException.class, () ->
                 reservationUseCase.createPayment(newPayment, reservationId, user)
         );
-        assertEquals("El pago no se ha realizado ya que la reserva ya esta pagada y confirmada", ex.getMessage());
+        assertEquals("El pago no se ha realizado ya que la reserva ya está pagada y confirmada", ex.getMessage());
     }
 
     /**
@@ -1036,6 +1024,7 @@ public class ReservationUseCaseTest {
 
         Payment newPayment = new Payment();
         newPayment.amount = new BigDecimal("50.00"); // Exactly the remaining amount
+        newPayment.payment_date = LocalDate.now();
 
         User user = new User();
         user.id = 10L;

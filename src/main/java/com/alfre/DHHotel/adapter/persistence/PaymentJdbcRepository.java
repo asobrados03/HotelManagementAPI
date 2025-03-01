@@ -14,7 +14,7 @@ import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -197,7 +197,7 @@ public class PaymentJdbcRepository implements PaymentRepository {
             long id = rs.getLong("id");
             long reservationId = rs.getLong("reservation_id");
             BigDecimal amount = rs.getBigDecimal("amount");
-            Date paymentDate = new Date(rs.getTimestamp("payment_date").getTime());
+            LocalDate paymentDate = rs.getObject("payment_date", LocalDate.class);
             MethodPayment method = MethodPayment.valueOf(rs.getString("method").toUpperCase());
 
             return new Payment(id, reservationId, amount, paymentDate, method);

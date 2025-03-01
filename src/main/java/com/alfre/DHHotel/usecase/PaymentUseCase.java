@@ -143,6 +143,7 @@ public class PaymentUseCase {
      */
     private void updateReservationStatus(Reservation reservation) {
         BigDecimal paidTotal = paymentRepository.getTotalPaid(reservation.id);
+        ReservationStatus originalStatus = reservation.status;
 
         if (paidTotal.compareTo(reservation.total_price) < 0) {
             reservation.setStatus(ReservationStatus.PENDING);
@@ -152,6 +153,9 @@ public class PaymentUseCase {
             throw new RuntimeException("El importe del pago excede el precio total de la reserva asociada");
         }
 
-        reservationRepository.updateReservation(reservation);
+        // Update only the status changed
+        if (reservation.status != originalStatus) {
+            reservationRepository.updateReservation(reservation);
+        }
     }
 }

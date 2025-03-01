@@ -4,6 +4,8 @@ import com.alfre.DHHotel.adapter.security.jwt.JwtService;
 import com.alfre.DHHotel.domain.model.*;
 import com.alfre.DHHotel.domain.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,8 +25,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -65,7 +66,14 @@ public class ReservationIntegrationTests {
     private Long testReservationId;
     private Long testRoomId;
     private Long testClientId;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final ObjectMapper objectMapper;
+
+    {
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 
     @Container
     public static MariaDBContainer<?> mariaDB = new MariaDBContainer<>(DockerImageName.parse("mariadb:10.6.5"))
@@ -156,8 +164,8 @@ public class ReservationIntegrationTests {
         Reservation reservation = new Reservation();
         reservation.client_id = testClientId;
         reservation.room_id = testRoomId;
-        reservation.start_date = Date.from(Instant.now().plusSeconds(86400)); // Tomorrow
-        reservation.end_date = Date.from(Instant.now().plusSeconds(172800));  // Day after tomorrow
+        reservation.start_date = LocalDate.now().plusDays(1); // Tomorrow
+        reservation.end_date = LocalDate.now().plusDays(2);  // Day after tomorrow
         reservation.total_price = BigDecimal.valueOf(300.00);
         reservation.status = ReservationStatus.PENDING;
         testReservationId = reservationRepository.createReservation(reservation);
@@ -295,8 +303,8 @@ public class ReservationIntegrationTests {
     public void testCreateReservation_Success() throws Exception {
         Reservation newReservation = new Reservation();
         newReservation.room_id = testRoomId;
-        newReservation.start_date = Date.from(Instant.now().plusSeconds(259200)); // +3 days
-        newReservation.end_date = Date.from(Instant.now().plusSeconds(345600));  // +4 days
+        newReservation.start_date = LocalDate.now().plusDays(3); // +3 days
+        newReservation.end_date = LocalDate.now().plusDays(4);  // +4 days
 
         mockMvc.perform(post("/api/client/reservation")
                         .header("Authorization", "Bearer " + clientToken)
@@ -325,8 +333,8 @@ public class ReservationIntegrationTests {
 
         Reservation newReservation = new Reservation();
         newReservation.room_id = maintenanceRoomId;
-        newReservation.start_date = new Date(System.currentTimeMillis() + 86400000);
-        newReservation.end_date = new Date(System.currentTimeMillis() + 172800000);
+        newReservation.start_date = LocalDate.now().plusDays(5);
+        newReservation.end_date = LocalDate.now().plusDays(8);
 
         mockMvc.perform(post("/api/client/reservation")
                         .header("Authorization", "Bearer " + clientToken)
@@ -348,8 +356,8 @@ public class ReservationIntegrationTests {
     public void testCreateReservation_Failure_InvalidDates() throws Exception {
         Reservation newReservation = new Reservation();
         newReservation.room_id = testRoomId;
-        newReservation.start_date = new Date(System.currentTimeMillis() + 172800000);
-        newReservation.end_date = new Date(System.currentTimeMillis() + 86400000); // End date before start date
+        newReservation.start_date = LocalDate.now().plusDays(8);
+        newReservation.end_date = LocalDate.now().plusDays(2); // End date before start date
 
         mockMvc.perform(post("/api/client/reservation")
                         .header("Authorization", "Bearer " + clientToken)
@@ -383,8 +391,8 @@ public class ReservationIntegrationTests {
         Reservation conflictingReservation = new Reservation();
         conflictingReservation.room_id = testRoomId;
         conflictingReservation.client_id = conflictClientId;
-        conflictingReservation.start_date = new Date(System.currentTimeMillis() - 86400000);
-        conflictingReservation.end_date = new Date(System.currentTimeMillis() + 86400000);
+        conflictingReservation.start_date = LocalDate.now().minusDays(1);
+        conflictingReservation.end_date = LocalDate.now().plusDays(1);
         conflictingReservation.total_price = BigDecimal.valueOf(300.00);
         conflictingReservation.status = ReservationStatus.PENDING;
         reservationRepository.createReservation(conflictingReservation);
@@ -393,8 +401,8 @@ public class ReservationIntegrationTests {
         Reservation newReservation = new Reservation();
         newReservation.room_id = testRoomId;
         newReservation.client_id = testClientId;
-        newReservation.start_date = new Date();
-        newReservation.end_date = new Date(System.currentTimeMillis() + 86400000);
+        newReservation.start_date = LocalDate.now();
+        newReservation.end_date = LocalDate.now().plusDays(1);
         newReservation.total_price = BigDecimal.valueOf(300.00);
         newReservation.status = ReservationStatus.PENDING;
 
@@ -418,8 +426,9 @@ public class ReservationIntegrationTests {
     @Test
     public void testUpdateReservation_Success() throws Exception {
         Reservation updated = new Reservation();
-        updated.start_date = Date.from(Instant.now().plusSeconds(172800));
-        updated.end_date = Date.from(Instant.now().plusSeconds(259200));
+        updated.start_date = LocalDate.of(2025, 3, 1);
+        updated.end_date = LocalDate.of(2025, 3, 6);
+        updated.room_id = testRoomId;
 
         mockMvc.perform(put("/api/reservation/" + testReservationId)
                         .header("Authorization", "Bearer " + clientToken)
@@ -447,8 +456,8 @@ public class ReservationIntegrationTests {
         reservationRepository.updateReservation(reservation);
 
         Reservation updateRequest = new Reservation();
-        updateRequest.start_date = new Date();
-        updateRequest.end_date = new Date(System.currentTimeMillis() + 86400000);
+        updateRequest.start_date = LocalDate.now();
+        updateRequest.end_date = LocalDate.now().plusDays(5);
 
         mockMvc.perform(put("/api/reservation/" + testReservationId)
                         .header("Authorization", "Bearer " + clientToken)
@@ -548,6 +557,7 @@ public class ReservationIntegrationTests {
         Payment payment = new Payment();
         payment.amount = BigDecimal.valueOf(150.00);
         payment.method = MethodPayment.CARD;
+        payment.payment_date = LocalDate.now();
 
         mockMvc.perform(post("/api/admin/reservation/" + testReservationId + "/payment")
                         .header("Authorization", "Bearer " + adminToken)
@@ -623,8 +633,8 @@ public class ReservationIntegrationTests {
         Reservation confirmedReservation = new Reservation();
         confirmedReservation.room_id = testRoomId;
         confirmedReservation.client_id = testClientId;
-        confirmedReservation.start_date = new Date(System.currentTimeMillis() + 86400000); // +1 day
-        confirmedReservation.end_date = new Date(System.currentTimeMillis() + 172800000);   // +2 days
+        confirmedReservation.start_date = LocalDate.now().plusDays(1); // +1 day
+        confirmedReservation.end_date = LocalDate.now().plusDays(2); // +2 days
         confirmedReservation.total_price = new BigDecimal("400.00");
         confirmedReservation.status = ReservationStatus.CONFIRMED;
         long reservationId = reservationRepository.createReservation(confirmedReservation);
@@ -634,7 +644,7 @@ public class ReservationIntegrationTests {
         fullPayment.reservation_id = reservationId;
         fullPayment.amount = new BigDecimal("400.00");
         fullPayment.method = MethodPayment.CARD;
-        fullPayment.payment_date = new Date(System.currentTimeMillis());
+        fullPayment.payment_date = LocalDate.now();
         paymentRepository.createPayment(fullPayment);
 
         // 3. Attempt to add an extra payment
@@ -677,22 +687,22 @@ public class ReservationIntegrationTests {
         reservation.client_id = clientId;
         reservation.total_price = new BigDecimal("500.00");
         reservation.status = ReservationStatus.CONFIRMED;
-        reservation.start_date = new Date(System.currentTimeMillis() + 86400000); // +1 day
-        reservation.end_date = new Date(System.currentTimeMillis() + 172800000);   // +2 days
+        reservation.start_date = LocalDate.now().plusDays(1); // +1 day
+        reservation.end_date = LocalDate.now().plusDays(2);  // +2 days
         long reservationId = reservationRepository.createReservation(reservation);
 
         Payment payment1 = new Payment();
         payment1.reservation_id = reservationId;
         payment1.amount = new BigDecimal("300.00");
         payment1.method = MethodPayment.CARD;
-        payment1.payment_date = new Date(System.currentTimeMillis());
+        payment1.payment_date = LocalDate.now();
         paymentRepository.createPayment(payment1);
 
         Payment payment2 = new Payment();
         payment2.reservation_id = reservationId;
         payment2.amount = new BigDecimal("200.00");
         payment2.method = MethodPayment.CASH;
-        payment2.payment_date = new Date(System.currentTimeMillis());
+        payment2.payment_date = LocalDate.now();
         paymentRepository.createPayment(payment2);
 
         mockMvc.perform(get("/api/admin/reservations/" + clientId + "/payments")
@@ -830,8 +840,8 @@ public class ReservationIntegrationTests {
 
         Reservation updateRequest = new Reservation();
         updateRequest.client_id = originalReservation.client_id; // Original client id
-        updateRequest.start_date = new Date();
-        updateRequest.end_date = new Date(System.currentTimeMillis() + 86400000);
+        updateRequest.start_date = LocalDate.now();
+        updateRequest.end_date = LocalDate.now().plusDays(2);
         updateRequest.room_id = testRoomId;
 
         mockMvc.perform(put("/api/reservation/" + testReservationId)

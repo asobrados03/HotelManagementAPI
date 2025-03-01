@@ -22,7 +22,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -69,9 +70,11 @@ public class ReservationJdbcRepositoryTest {
     void testGetAllReservations() {
         // Arrange
         Reservation res1 = new Reservation(1L, 10L, 100L, BigDecimal.valueOf(500.0),
-                Date.valueOf("2023-01-01"), Date.valueOf("2023-01-05"), ReservationStatus.CONFIRMED);
+                LocalDate.of(2023, Month.JANUARY, 1),
+                LocalDate.of(2023, Month.JANUARY, 5), ReservationStatus.CONFIRMED);
         Reservation res2 = new Reservation(2L, 20L, 200L, BigDecimal.valueOf(750.0),
-                Date.valueOf("2023-02-01"), Date.valueOf("2023-02-05"), ReservationStatus.PENDING);
+                LocalDate.of(2023, Month.FEBRUARY, 1),
+                LocalDate.of(2023, Month.FEBRUARY, 5), ReservationStatus.PENDING);
 
         List<Reservation> reservations = Arrays.asList(res1, res2);
 
@@ -97,7 +100,8 @@ public class ReservationJdbcRepositoryTest {
         // Arrange
         long id = 1L;
         Reservation res = new Reservation(id, 10L, 100L, BigDecimal.valueOf(500.0),
-                Date.valueOf("2023-01-01"), Date.valueOf("2023-01-05"), ReservationStatus.CONFIRMED);
+                LocalDate.of(2023, Month.JANUARY, 1),
+                LocalDate.of(2023, Month.JANUARY, 5), ReservationStatus.CONFIRMED);
 
         String sql = "SELECT * FROM " + table + " WHERE id = :id";
 
@@ -141,9 +145,11 @@ public class ReservationJdbcRepositoryTest {
         // Arrange
         Long clientId = 10L;
         Reservation res1 = new Reservation(1L, clientId, 100L, BigDecimal.valueOf(500.0),
-                Date.valueOf("2023-01-01"), Date.valueOf("2023-01-05"), ReservationStatus.CONFIRMED);
+                LocalDate.of(2023, Month.JANUARY, 1),
+                LocalDate.of(2023, Month.JANUARY, 5), ReservationStatus.CONFIRMED);
         Reservation res2 = new Reservation(2L, clientId, 200L, BigDecimal.valueOf(750.0),
-                Date.valueOf("2023-02-01"), Date.valueOf("2023-02-05"), ReservationStatus.PENDING);
+                LocalDate.of(2023, Month.FEBRUARY, 1),
+                LocalDate.of(2023, Month.FEBRUARY, 5), ReservationStatus.PENDING);
 
         List<Reservation> reservations = Arrays.asList(res1, res2);
 
@@ -169,7 +175,8 @@ public class ReservationJdbcRepositoryTest {
     void testCreateReservation() {
         // Arrange
         Reservation newRes = new Reservation(0L, 10L, 100L, BigDecimal.valueOf(500.0),
-                Date.valueOf("2023-01-01"), Date.valueOf("2023-01-05"), ReservationStatus.CONFIRMED);
+                LocalDate.of(2023, Month.JANUARY, 1),
+                LocalDate.of(2023, Month.JANUARY, 5), ReservationStatus.CONFIRMED);
 
         when(insert.executeAndReturnKey(any(MapSqlParameterSource.class))).thenReturn(1L);
 
@@ -200,7 +207,8 @@ public class ReservationJdbcRepositoryTest {
     void testUpdateReservation() {
         // Arrange
         Reservation updatedRes = new Reservation(1L, 10L, 100L, BigDecimal.valueOf(500.0),
-                Date.valueOf("2023-01-01"), Date.valueOf("2023-01-05"), ReservationStatus.CONFIRMED);
+                LocalDate.of(2023, Month.JANUARY, 1),
+                LocalDate.of(2023, Month.JANUARY, 5), ReservationStatus.CONFIRMED);
         // Modify a field (for example, total_price)
         updatedRes.total_price = BigDecimal.valueOf(550.0);
 
@@ -239,8 +247,8 @@ public class ReservationJdbcRepositoryTest {
     void testIsRoomAvailable_available() {
         // Arrange: The room is available if there are no overlapping reservations (count = 0)
         Long roomId = 100L;
-        Date startDate = Date.valueOf("2023-05-01");
-        Date endDate = Date.valueOf("2023-05-05");
+        LocalDate startDate = LocalDate.of(2023, Month.JANUARY, 1);
+        LocalDate endDate = LocalDate.of(2023, Month.JANUARY, 5);
 
         String sql = String.format("""
         SELECT COALESCE(COUNT(*), 0)
@@ -275,8 +283,8 @@ public class ReservationJdbcRepositoryTest {
     void testIsRoomAvailable_unavailable() {
         // Arrange: The room is not available if count > 0
         Long roomId = 100L;
-        Date startDate = Date.valueOf("2023-05-01");
-        Date endDate = Date.valueOf("2023-05-05");
+        LocalDate startDate = LocalDate.of(2023, Month.MAY, 1);
+        LocalDate endDate = LocalDate.of(2023, Month.MAY, 5);
         String sql = String.format("""
         SELECT COALESCE(COUNT(*), 0)
         FROM %s
@@ -310,8 +318,8 @@ public class ReservationJdbcRepositoryTest {
         // Arrange: Test null or invalid dates
 
         Long roomId = 100L;
-        Date startDate = Date.valueOf("2023-05-05");
-        Date endDate = Date.valueOf("2023-05-01"); // endDate before startDate
+        LocalDate startDate = LocalDate.of(2023, Month.MAY, 5);
+        LocalDate endDate = LocalDate.of(2023, Month.MAY, 1); // endDate before startDate
 
         // roomId is null
         Exception ex1 = assertThrows(IllegalArgumentException.class, () ->
@@ -321,17 +329,17 @@ public class ReservationJdbcRepositoryTest {
         // startDate is null
         Exception ex2 = assertThrows(IllegalArgumentException.class, () ->
                 reservationRepository.isRoomAvailable(roomId, null, endDate));
-        assertEquals("La fecha de inicio no puede ser null", ex2.getMessage());
+        assertEquals("La fecha de entrada no puede ser null", ex2.getMessage());
 
         // endDate is null
         Exception ex3 = assertThrows(IllegalArgumentException.class, () ->
                 reservationRepository.isRoomAvailable(roomId, startDate, null));
-        assertEquals("La fecha de fin no puede ser null", ex3.getMessage());
+        assertEquals("La fecha de salida no puede ser null", ex3.getMessage());
 
         // endDate before startDate
         Exception ex4 = assertThrows(IllegalArgumentException.class, () ->
                 reservationRepository.isRoomAvailable(roomId, startDate, endDate));
-        assertEquals("La fecha de fin no puede ser anterior a la fecha de inicio", ex4.getMessage());
+        assertEquals("La fecha de salida no puede ser anterior a la fecha de entrada.", ex4.getMessage());
     }
 
     /**
@@ -341,8 +349,8 @@ public class ReservationJdbcRepositoryTest {
     void testIsRoomAvailable_dataAccessException() {
         // Arrange: Simulate jdbcTemplate.queryForObject throwing a DataAccessException
         Long roomId = 100L;
-        Date startDate = Date.valueOf("2023-05-01");
-        Date endDate = Date.valueOf("2023-05-05");
+        LocalDate startDate = LocalDate.of(2023, Month.MAY, 1);
+        LocalDate endDate = LocalDate.of(2023, Month.MAY, 5);
 
         String sql = String.format("""
         SELECT COALESCE(COUNT(*), 0)
