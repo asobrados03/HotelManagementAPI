@@ -354,6 +354,9 @@ docker compose up -d
 
 ### Ejecutar la API
 
+> [!CAUTION]
+> Antes de ejecutar el código fuente de la API, el contenedor Docker con la base de datos MariaDB debe estar corriendo.
+
 1. Clona el repositorio:
    ```bash
    git clone https://github.com/asobrados03/HotelManagementAPI.git
