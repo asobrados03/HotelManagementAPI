@@ -36,7 +36,7 @@ public class AdministratorJdbcRepository implements AdministratorRepository {
      * Constructs an AdministratorJdbcRepository with the given NamedParameterJdbcTemplate and DataSource.
      *
      * @param namedParameterJdbcTemplate the NamedParameterJdbcTemplate to use for executing queries
-     * @param dataSource the DataSource for obtaining database connections
+     * @param dataSource the DataSource for getting database connections
      */
     public AdministratorJdbcRepository(NamedParameterJdbcTemplate namedParameterJdbcTemplate, DataSource dataSource) {
         this.jdbcTemplate = namedParameterJdbcTemplate;
