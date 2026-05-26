@@ -1,5 +1,7 @@
 package com.alfre.DHHotel.usecase;
 
+import com.alfre.DHHotel.domain.event.EventPublisher;
+import com.alfre.DHHotel.domain.event.ReservationCreatedEvent;
 import com.alfre.DHHotel.domain.model.*;
 import com.alfre.DHHotel.domain.repository.ClientRepository;
 import com.alfre.DHHotel.domain.repository.PaymentRepository;
@@ -34,6 +36,7 @@ public class ReservationUseCase {
     private final PaymentRepository paymentRepository;
     private final RoomRepository roomRepository;
     private final ClientRepository clientRepository;
+    private final EventPublisher eventPublisher;
     private static final Logger logger = LoggerFactory.getLogger(ReservationUseCase.class);
 
     /**
@@ -111,7 +114,16 @@ public class ReservationUseCase {
         }
 
         newReservation.setStatus(ReservationStatus.PENDING);
-        return reservationRepository.createReservation(newReservation);
+        long reservationId = reservationRepository.createReservation(newReservation);
+        eventPublisher.publishReservationCreated(new ReservationCreatedEvent(
+                reservationId,
+                newReservation.client_id,
+                newReservation.room_id,
+                newReservation.start_date,
+                newReservation.end_date,
+                newReservation.status.name()
+        ));
+        return reservationId;
     }
 
     /**
