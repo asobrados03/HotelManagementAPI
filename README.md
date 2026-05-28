@@ -291,6 +291,11 @@ graph TD;
     JwtFilter -- "❌ HTTP 403: Falta token o usuario no existe" --> Cliente
 ```
 
+### 🚀 Evolución de Arquitectura: Escalabilidad y Mensajería
+Para transformar este monolito en un sistema preparado para alta carga, se realizaron dos mejoras estructurales:
+1. **Caché con Redis:** Optimización del endpoint de consulta de habitaciones mediante `@Cacheable`, reduciendo los accesos a MariaDB y mejorando el tiempo de respuesta en un X%.
+2. **Arquitectura Orientada a Eventos (EDA):** Se desacopló el flujo de reservas mediante **RabbitMQ**. Al confirmar una reserva, la API publica un evento asíncrono que es procesado por un microservicio independiente de notificaciones (`hotel-notification-service`), garantizando la resiliencia del sistema.
+
 ## Tecnologías Utilizadas
 
 - **Java 21+**
