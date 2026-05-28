@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmación de reserva</title>
+</head>
+<body style="margin: 0; padding: 0; background: #f4f7f6; font-family: Arial, Helvetica, sans-serif; color: #1f2933;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f4f7f6; padding: 32px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background: #ffffff; border-radius: 8px; overflow: hidden;">
+                <tr>
+                    <td style="background: #0f766e; padding: 24px 32px; color: #ffffff;">
+                        <h1 style="margin: 0; font-size: 24px;">DH Hotel</h1>
+                        <p style="margin: 8px 0 0;">Confirmación de reserva</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 32px;">
+                        <p style="margin-top: 0;">Hola <strong th:text="${guestName}">Nombre del huésped</strong>,</p>
+                        <p>Tu reserva ha sido confirmada correctamente. Estos son los detalles:</p>
+
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 24px 0; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;"><strong>Número de reserva</strong></td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;" th:text="${bookingId}">123</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;"><strong>Huésped</strong></td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;" th:text="${guestName}">Nombre del huésped</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;"><strong>Habitación</strong></td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;" th:text="${roomNumber}">101</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;"><strong>Check-in</strong></td>
+                                <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;" th:text="${#temporals.format(checkIn, 'dd/MM/yyyy')}">01/06/2026</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px;"><strong>Check-out</strong></td>
+                                <td style="padding: 12px;" th:text="${#temporals.format(checkOut, 'dd/MM/yyyy')}">05/06/2026</td>
+                            </tr>
+                        </table>
+
+                        <p>Gracias por elegir DH Hotel. Te esperamos.</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

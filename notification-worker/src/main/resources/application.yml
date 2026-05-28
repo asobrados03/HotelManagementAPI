@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: notification-worker
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+  thymeleaf:
+    encoding: UTF-8
+    mode: HTML
+
+app:
+  mail:
+    from: ${MAIL_FROM}
+
+logging:
+  level:
+    com.alfre.DHHotel.notificationworker: INFO
