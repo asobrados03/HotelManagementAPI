@@ -293,8 +293,51 @@ graph TD;
 
 ### 🚀 Evolución de Arquitectura: Escalabilidad y Mensajería
 Para transformar este monolito en un sistema preparado para alta carga, se realizaron dos mejoras estructurales:
-1. **Caché con Redis:** Optimización del endpoint de consulta de habitaciones mediante `@Cacheable`, reduciendo los accesos a MariaDB y mejorando el tiempo de respuesta en un X%.
-2. **Arquitectura Orientada a Eventos (EDA):** Se desacopló el flujo de reservas mediante **RabbitMQ**. Al confirmar una reserva, la API publica un evento asíncrono que es procesado por un microservicio independiente de notificaciones (`hotel-notification-service`), garantizando la resiliencia del sistema.
+1. **Caché con Redis:** Optimización del endpoint de consulta de habitaciones disponibles mediante `@Cacheable("room-availability")`. La caché tiene un TTL de 5 minutos y se invalida automáticamente al crear, modificar o cancelar una reserva, y también al cambiar el estado de una habitación.
+2. **Arquitectura Orientada a Eventos (EDA):** Se desacopló el flujo de notificaciones mediante **RabbitMQ**. Al crear una reserva, la API publica un `BookingCreatedEvent` en el exchange `hotel.exchange` con la routing key `booking.created`. El microservicio independiente `notification-worker` consume la cola `hotel.notifications` y envía un email de confirmación al huésped.
+
+#### Flujo de eventos de reserva
+
+```text
+Cliente / Admin
+     |
+     v
+hotel-api
+     |
+     | BookingCreatedEvent
+     v
+RabbitMQ (hotel.exchange)
+     |
+     v
+Cola hotel.notifications
+     |
+     v
+notification-worker
+     |
+     v
+Email de confirmación al huésped
+```
+
+El sistema de mensajería incluye reintentos automáticos con backoff exponencial usando colas intermedias:
+
+```text
+hotel.notifications
+     |
+     | fallo
+     v
+retry.1 (5s) -> retry.2 (25s) -> retry.3 (125s) -> hotel.notifications.dlq
+```
+
+Si el envío del email falla en los reintentos configurados, el mensaje termina en la Dead Letter Queue `hotel.notifications.dlq` para su revisión posterior.
+
+#### Microservicio `notification-worker`
+
+El proyecto incluye el módulo independiente `notification-worker`, encargado de procesar las notificaciones de reservas:
+
+- Escucha la cola `hotel.notifications`.
+- Consume eventos `BookingCreatedEvent` serializados en JSON.
+- Envía emails HTML con Spring Mail.
+- Usa una plantilla Thymeleaf en español (`booking-confirmation.html`) para el email de confirmación de reserva.
 
 ## Tecnologías Utilizadas
 
@@ -302,9 +345,17 @@ Para transformar este monolito en un sistema preparado para alta carga, se reali
 - **Spring Boot**
 - **Spring Security con JWT**
 - **JDBC**
+- **RabbitMQ**
+- **Redis**
+- **Spring AMQP**
+- **Spring Cache**
+- **Spring Mail**
+- **Thymeleaf**
 - **Docker**  
   - **MariaDB**
   - **Adminer**
+  - **Redis**
+  - **RabbitMQ**
 - **Swagger/OpenAPI**
 - **Gradle**
 - **JUnit5**
@@ -322,34 +373,22 @@ Para transformar este monolito en un sistema preparado para alta carga, se reali
 
 ### Configuración de Docker
 
-El proyecto incluye un archivo `docker-compose.yml` para levantar la base de datos y Adminer. Un ejemplo de `docker-compose.yml` podría ser:
+El proyecto incluye un archivo `docker-compose.yml` para levantar la infraestructura necesaria de la aplicación:
 
-```yaml
-version: '3.8'
+- **MariaDB**: base de datos principal, disponible en el puerto `3306`.
+- **Adminer**: panel web para gestionar la base de datos, disponible en `http://localhost:8081`.
+- **Redis**: caché de disponibilidad de habitaciones, disponible en el puerto `6379`.
+- **RabbitMQ**: broker de eventos, disponible por AMQP en el puerto `5672`.
+- **Panel de RabbitMQ**: consola de administración disponible en `http://localhost:15672`.
 
-services:
-  mariadb:
-    image: mariadb:10.5
-    container_name: hotel-mariadb
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: hotel_db
-      MYSQL_USER: hoteluser
-      MYSQL_PASSWORD: hotelpassword
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
+En el despliegue completo, los servicios de la aplicación son:
 
-  adminer:
-    image: adminer
-    container_name: hotel-adminer
-    ports:
-      - "8080:8080"
-
-volumes:
-  db_data:
-```
+- **hotel-api**: API principal de gestión del hotel.
+- **notification-worker**: microservicio que consume `hotel.notifications` y envía emails de confirmación.
+- **mariadb**
+- **adminer**
+- **redis**
+- **rabbitmq**
 
 Para iniciar los contenedores, ejecuta en la raíz del proyecto:
 
@@ -375,6 +414,11 @@ docker compose up -d
    ```
 
 3. La API estará disponible en `http://localhost:8080`.
+
+4. Para ejecutar el worker de notificaciones:
+   ```bash
+   ./gradlew :notification-worker:bootRun
+   ```
 
 ## Documentación de la API
 
