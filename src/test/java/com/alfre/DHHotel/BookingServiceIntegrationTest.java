@@ -44,7 +44,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Alfredo Sobrados González
  */
 @Testcontainers
-@SpringBootTest(properties = "spring.cache.type=simple")
+@SpringBootTest(properties = {
+        "spring.cache.type=simple",
+        "spring.rabbitmq.listener.simple.auto-startup=false",
+        "spring.rabbitmq.listener.direct.auto-startup=false",
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration," +
+                "org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration"
+})
 public class BookingServiceIntegrationTest {
 
     @Autowired
@@ -80,11 +86,6 @@ public class BookingServiceIntegrationTest {
 
     @Container
     public static RabbitMQContainer rabbitMQ = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3-alpine"));
-
-    static {
-        mariaDB.start();
-        rabbitMQ.start();
-    }
 
     /**
      * Configures dynamic properties for MariaDB and RabbitMQ Testcontainers.

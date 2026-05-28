@@ -7,6 +7,8 @@ plugins {
 group = 'com.alfre'
 version = '0.0.1-SNAPSHOT'
 
+ext['testcontainers.version'] = '1.20.5'
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
@@ -53,7 +55,7 @@ dependencies {
 	testImplementation 'org.mockito:mockito-core:5.2.0'
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.2.0'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:junit-jupiter:1.20.5'
 	testImplementation 'org.testcontainers:mariadb:1.20.5'
 	testImplementation 'org.testcontainers:rabbitmq:1.20.5'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
