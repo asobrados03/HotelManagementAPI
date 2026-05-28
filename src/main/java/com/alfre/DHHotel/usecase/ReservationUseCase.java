@@ -1,15 +1,16 @@
 package com.alfre.DHHotel.usecase;
 
+import com.alfre.DHHotel.domain.event.BookingCreatedEvent;
 import com.alfre.DHHotel.domain.event.EventPublisher;
-import com.alfre.DHHotel.domain.event.ReservationCreatedEvent;
 import com.alfre.DHHotel.domain.model.*;
 import com.alfre.DHHotel.domain.repository.ClientRepository;
 import com.alfre.DHHotel.domain.repository.PaymentRepository;
 import com.alfre.DHHotel.domain.repository.ReservationRepository;
 import com.alfre.DHHotel.domain.repository.RoomRepository;
-import lombok.AllArgsConstructor;
+import com.alfre.DHHotel.domain.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,14 +31,31 @@ import java.util.Optional;
  * @author Alfredo Sobrados González
  */
 @Service
-@AllArgsConstructor
 public class ReservationUseCase {
     private final ReservationRepository reservationRepository;
     private final PaymentRepository paymentRepository;
     private final RoomRepository roomRepository;
     private final ClientRepository clientRepository;
+    private final UserRepository userRepository;
     private final EventPublisher eventPublisher;
     private static final Logger logger = LoggerFactory.getLogger(ReservationUseCase.class);
+
+    @Autowired
+    public ReservationUseCase(ReservationRepository reservationRepository, PaymentRepository paymentRepository,
+                              RoomRepository roomRepository, ClientRepository clientRepository,
+                              UserRepository userRepository, EventPublisher eventPublisher) {
+        this.reservationRepository = reservationRepository;
+        this.paymentRepository = paymentRepository;
+        this.roomRepository = roomRepository;
+        this.clientRepository = clientRepository;
+        this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public ReservationUseCase(ReservationRepository reservationRepository, PaymentRepository paymentRepository,
+                              RoomRepository roomRepository, ClientRepository clientRepository) {
+        this(reservationRepository, paymentRepository, roomRepository, clientRepository, null, null);
+    }
 
     /**
      * Retrieves all reservations.
@@ -107,23 +125,70 @@ public class ReservationUseCase {
             throw new RuntimeException("No se puede reservar una habitación en mantenimiento.");
         }
 
+        Client guest = null;
         if (user.role == Role.CLIENT) {
-            Client client = clientRepository.getClientByUserId(user.id)
+            guest = clientRepository.getClientByUserId(user.id)
                     .orElseThrow(() -> new RuntimeException("Cliente no encontrado en la base de datos."));
-            newReservation.setClient_id(client.id);
+            newReservation.setClient_id(guest.id);
         }
 
         newReservation.setStatus(ReservationStatus.PENDING);
         long reservationId = reservationRepository.createReservation(newReservation);
-        eventPublisher.publishReservationCreated(new ReservationCreatedEvent(
-                reservationId,
-                newReservation.client_id,
-                newReservation.room_id,
-                newReservation.start_date,
-                newReservation.end_date,
-                newReservation.status.name()
-        ));
+        publishBookingCreatedEvent(reservationId, newReservation, user, guest, room);
         return reservationId;
+    }
+
+    private void publishBookingCreatedEvent(long reservationId, Reservation reservation, User user, Client guest,
+                                            Room room) {
+        if (eventPublisher == null) {
+            return;
+        }
+
+        try {
+            Client eventGuest = resolveEventGuest(reservation, guest);
+            eventPublisher.publishBookingCreated(new BookingCreatedEvent(
+                    reservationId,
+                    resolveGuestEmail(user, eventGuest),
+                    resolveGuestName(eventGuest),
+                    String.valueOf(room.room_number),
+                    reservation.start_date,
+                    reservation.end_date
+            ));
+        } catch (Exception ex) {
+            logger.error("Error publishing booking.created event for reservation {}", reservationId, ex);
+        }
+    }
+
+    private Client resolveEventGuest(Reservation reservation, Client guest) {
+        if (guest != null || reservation.client_id == null) {
+            return guest;
+        }
+
+        return clientRepository.getClientById(reservation.client_id).orElse(null);
+    }
+
+    private String resolveGuestEmail(User user, Client guest) {
+        if (user.role == Role.CLIENT) {
+            return user.email;
+        }
+
+        if (guest == null || userRepository == null) {
+            return null;
+        }
+
+        return userRepository.getUserById(guest.user_id)
+                .map(guestUser -> guestUser.email)
+                .orElse(null);
+    }
+
+    private String resolveGuestName(Client guest) {
+        if (guest == null) {
+            return null;
+        }
+
+        String firstName = guest.first_name == null ? "" : guest.first_name;
+        String lastName = guest.last_name == null ? "" : guest.last_name;
+        return String.join(" ", firstName, lastName).trim();
     }
 
     /**
