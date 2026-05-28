@@ -16,4 +16,17 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8081:8080
+      - "8081:8080"
+
+  redis:
+    image: redis:7-alpine
+    container_name: hotel_redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: hotel_rabbitmq
+    ports:
+      - "5672:5672"   # Puerto de la app (AMQP)
+      - "15672:15672" # Panel de control web (Guest/Guest)
