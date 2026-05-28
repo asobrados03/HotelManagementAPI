@@ -5,6 +5,8 @@ import com.alfre.DHHotel.domain.model.Room;
 import com.alfre.DHHotel.domain.model.RoomStatus;
 import com.alfre.DHHotel.domain.model.RoomType;
 import com.alfre.DHHotel.domain.repository.RoomRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -112,6 +114,7 @@ public class RoomUseCase {
      *
      * @return A list of available rooms in DTO format.
      */
+    @Cacheable("room-availability")
     public List<RoomDTO> getAvailableRooms() {
         return roomRepository.getAvailableRooms()
                 .stream()
@@ -141,6 +144,7 @@ public class RoomUseCase {
      * @param status The new status (AVAILABLE, OCCUPIED, MAINTENANCE).
      * @return The number of rows affected.
      */
+    @CacheEvict(value = "room-availability", allEntries = true)
     public int updateStatus(long id, RoomStatus status) {
         return roomRepository.updateStatus(id, status);
     }

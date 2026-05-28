@@ -11,6 +11,7 @@ import com.alfre.DHHotel.domain.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,6 +98,7 @@ public class ReservationUseCase {
      * @throws RuntimeException If the room is unavailable, in maintenance, or has invalid dates.
      */
     @Transactional
+    @CacheEvict(value = "room-availability", allEntries = true)
     public long createReservation(Reservation newReservation, User user) {
         if (!reservationRepository.isRoomAvailable(newReservation.room_id, newReservation.start_date,
                 newReservation.end_date)) {
@@ -229,6 +231,7 @@ public class ReservationUseCase {
      * @return The number of rows affected.
      * @throws RuntimeException If the reservation cannot be modified.
      */
+    @CacheEvict(value = "room-availability", allEntries = true)
     public int updateReservation(long id, Reservation updatedReservation, User user) {
         Reservation reservation = reservationRepository.getReservationById(id)
                 .orElseThrow(() -> new IllegalArgumentException("La reserva no existe"));
@@ -270,6 +273,7 @@ public class ReservationUseCase {
      * @return The number of rows affected.
      * @throws RuntimeException If the reservation is already confirmed.
      */
+    @CacheEvict(value = "room-availability", allEntries = true)
     public int cancelReservation(long reservationId) {
         Reservation reservation = reservationRepository.getReservationById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("La reserva no existe"));
