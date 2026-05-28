@@ -298,6 +298,8 @@ Para transformar este monolito en un sistema preparado para alta carga, se reali
 
 #### Flujo de eventos de reserva
 
+![Arquitectura de notificaciones con RabbitMQ](resources/hotel_notifications_architecture.svg)
+
 ```text
 Cliente / Admin
      |
